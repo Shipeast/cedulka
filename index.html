@@ -239,15 +239,25 @@
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Geometrické konstanty a pozicování (119.1° úhel od vodorovné roviny vředu, 60.9° vzadu)
-        const CEDULKA_TLOUSTKA = 5; // mm
-        const POSUN_Y_NAHORU = 8;   // mm
-        
-        const config = {
-            Posun_X: 0,
-            Posun_Y: -4.5 + (POSUN_Y_NAHORU * Math.cos(119.1 * Math.PI / 180)),
-            Posun_Z: 32 + (POSUN_Y_NAHORU * Math.sin(119.1 * Math.PI / 180)),
+        // Původní parametry pro text
+        const configText = {
+            Posun_X: 10,
+            Posun_Y: -4.5,
+            Posun_Z: 32,
             Rotace_X: 119.1 * (Math.PI / 180),
+            Rotace_Y: 180 * (Math.PI / 180),
+            Rotace_Z: 0
+        };
+
+        // Parametry pro QR Kód (posun +8 mm nahoru pod úhlem 119.1°, střed na X=0)
+        const POSUN_NAHORU_QR = 8; // mm
+        const UHEL_RAD = 119.1 * (Math.PI / 180);
+        
+        const configQR = {
+            Posun_X: 0,
+            Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
+            Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
+            Rotace_X: UHEL_RAD,
             Rotace_Y: 180 * (Math.PI / 180),
             Rotace_Z: 0
         };
@@ -266,7 +276,7 @@
                     console.warn(`Soubor ${filename} nebyl nalezen na serveru, vytvořím náhradní geometrii.`);
                     let geo = filename.includes('stojanek') 
                         ? new THREE.BoxGeometry(60, 40, 10) 
-                        : new THREE.BoxGeometry(80, CEDULKA_TLOUSTKA, 60);
+                        : new THREE.BoxGeometry(80, 5, 80); // tloušťka qr.stl = 5mm
                     const mesh = new THREE.Mesh(geo, material);
                     modelGroup.add(mesh);
                     onLoaded(mesh);
@@ -295,7 +305,8 @@
             updateContent();
         });
 
-        function createQRMesh(text, targetSizeMm = 45, height = 3, material) {
+        // Generování QR kódu přesně 60x60 mm (6x6 cm) se středem na (0,0)
+        function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
             const qr = qrcode(0, 'M');
             qr.addData(text || " ");
             qr.make();
@@ -310,7 +321,6 @@
                 for (let c = 0; c < moduleCount; c++) {
                     if (qr.isDark(r, c)) {
                         const cellMesh = new THREE.Mesh(boxGeo, material);
-                        // Přesná středová kalkulace pro zarovnání QR kódu do středu
                         const x = (c + 0.5) * cellSize - targetSizeMm / 2;
                         const y = -((r + 0.5) * cellSize - targetSizeMm / 2);
                         cellMesh.position.set(x, y, height / 2);
@@ -345,15 +355,17 @@
                 textGeo.center();
 
                 meshPrvek = new THREE.Mesh(textGeo, matPrvek);
+                meshPrvek.position.set(configText.Posun_X, configText.Posun_Y, configText.Posun_Z);
+                meshPrvek.rotation.set(configText.Rotace_X, configText.Rotace_Y, configText.Rotace_Z, 'XYZ');
             } else {
                 const qrText = document.getElementById('qrInput').value || " ";
                 const height = parseFloat(document.getElementById('Vyska_QR').value);
 
-                meshPrvek = createQRMesh(qrText, 45, height, matPrvek);
+                // Velikost nastavitelná na 60mm (6 cm)
+                meshPrvek = createQRMesh(qrText, 60, height, matPrvek);
+                meshPrvek.position.set(configQR.Posun_X, configQR.Posun_Y, configQR.Posun_Z);
+                meshPrvek.rotation.set(configQR.Rotace_X, configQR.Rotace_Y, configQR.Rotace_Z, 'XYZ');
             }
-
-            meshPrvek.position.set(config.Posun_X, config.Posun_Y, config.Posun_Z);
-            meshPrvek.rotation.set(config.Rotace_X, config.Rotace_Y, config.Rotace_Z, 'XYZ');
 
             modelGroup.add(meshPrvek);
         }
@@ -421,7 +433,7 @@ Barva_Textu = "${document.getElementById('Barva_Textu').value}";
 color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("cedulka.stl"); }
 color(Barva_Textu) {
-    translate([${config.Posun_X}, ${config.Posun_Y}, ${config.Posun_Z}])
+    translate([${configText.Posun_X}, ${configText.Posun_Y}, ${configText.Posun_Z}])
     rotate([119.1, 180, 0])
     linear_extrude(height = Vyska_Pisma) {
         text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
@@ -434,9 +446,8 @@ color(Barva_Textu) {
 
                 scadContent = `/* [Nastavení QR Cedulky] */
 QR_Text = "${qrVal}"; 
+Velikost_QR = 60; // 6x6 cm
 Vyska_QR = ${heightVal}; 
-Tloustka_Cedulky = ${CEDULKA_TLOUSTKA}; // Tloušťka qr.stl = 5mm
-Posun_Nahoru = ${POSUN_Y_NAHORU}; // +8mm posun nahoru
 
 /* [Barevné nastavení pro AMS] */
 Barva_Stojanku = "${document.getElementById('Barva_Stojanku').value}"; 
@@ -444,14 +455,13 @@ Barva_Cedulky = "${document.getElementById('Barva_Cedulky').value}";
 Barva_QR = "${document.getElementById('Barva_Textu').value}"; 
 
 /* --- LOGIKA GENERUJÍCÍ MODEL --- */
-// Naklonění 119.1° z přední strany / 60.9° ze zadní strany
 color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("qr.stl"); }
 color(Barva_QR) {
-    translate([${config.Posun_X}, ${config.Posun_Y}, ${config.Posun_Z}])
+    translate([${configQR.Posun_X}, ${configQR.Posun_Y}, ${configQR.Posun_Z}])
     rotate([119.1, 180, 0])
     translate([0, 0, 0]) {
-        // Váš QR kód generovaný ve středu cedulky
+        // Vygenerovaný QR kód (velikost 60x60mm)
     }
 }
 `;
