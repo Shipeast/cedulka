@@ -239,7 +239,6 @@
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Nastavení konfigurací pro Text a QR kód zvlášť
         const configText = {
             Posun_X: 10,
             Posun_Y: -4.5,
@@ -258,7 +257,6 @@
             Rotace_Z: 0
         };
 
-        // Pomocná funkce pro získání objektu generátoru QR
         function getQRGenerator(text) {
             const qr = qrcode(0, 'M');
             qr.addData(text || " ");
@@ -288,7 +286,6 @@
             );
         }
 
-        // Načtení stojánku
         loadSTL('stojanek.stl', matStojanek, (m) => meshStojanek = m);
 
         function updateCedulkaMesh() {
@@ -315,20 +312,38 @@
             const cellSize = targetSizeMm / moduleCount;
 
             const qrGroup = new THREE.Group();
-            const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
+            
+            // Sloučíme všechny čtverečky do jedné geometrie pro správné vycentrování pivotu
+            const geometries = [];
 
             for (let r = 0; r < moduleCount; r++) {
                 for (let c = 0; c < moduleCount; c++) {
                     if (qr.isDark(r, c)) {
-                        const cellMesh = new THREE.Mesh(boxGeo, material);
-                        const x = (c + 0.5) * cellSize - targetSizeMm / 2;
-                        const y = -((r + 0.5) * cellSize - targetSizeMm / 2);
-                        cellMesh.position.set(x, y, height / 2);
-                        qrGroup.add(cellMesh);
+                        const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
+                        
+                        // Pozice každého elementu (r, c)
+                        const x = c * cellSize;
+                        const y = (moduleCount - 1 - r) * cellSize;
+                        const z = height / 2;
+
+                        boxGeo.translate(x, y, z);
+                        geometries.push(boxGeo);
                     }
                 }
             }
-            return qrGroup;
+
+            // Pokud máme geometrie, sloučíme je nebo je vložíme s posunem středu
+            const mergedGroup = new THREE.Group();
+            const halfSize = targetSizeMm / 2;
+
+            geometries.forEach(geo => {
+                // Vycentrování: posuneme geometrii o polovinu celkové velikosti QR kódu zpět
+                geo.translate(-halfSize + (cellSize / 2), -halfSize + (cellSize / 2), 0);
+                const mesh = new THREE.Mesh(geo, material);
+                mergedGroup.add(mesh);
+            });
+
+            return mergedGroup;
         }
 
         function updateContent() {
@@ -443,11 +458,9 @@ color(Barva_Textu) {
                 const qrVal = document.getElementById('qrInput').value;
                 const heightVal = document.getElementById('Vyska_QR').value;
 
-                // Vygenerování 2D matice bodů pro OpenSCAD
                 const qr = getQRGenerator(qrVal);
                 const count = qr.getModuleCount();
                 const targetSize = 60;
-                const cellSize = targetSize / count;
 
                 let matrixRows = [];
                 for (let r = 0; r < count; r++) {
@@ -479,8 +492,8 @@ module generate_qr(matrix, size, height) {
         for (r = [0 : count - 1]) {
             for (c = [0 : count - 1]) {
                 if (matrix[r][c] == 1) {
-                    translate([(c + 0.5) * cell_size - size / 2, -((r + 0.5) * cell_size - size / 2) - cell_size / 2, 0])
-                    square([cell_size, cell_size], center = false);
+                    translate([(c - count / 2 + 0.5) * cell_size, (count / 2 - r - 0.5) * cell_size, 0])
+                    square([cell_size, cell_size], center = true);
                 }
             }
         }
