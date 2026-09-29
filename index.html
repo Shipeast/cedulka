@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Konfigurátor Cedulky</title>
+    <!-- Google Font Montserrat -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        #sidebar {
+            width: 380px;
+            background-color: #242424;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+        #viewport {
+            flex-grow: 1;
+            position: relative;
+        }
+        h2 {
+            font-size: 1.1rem;
+            border-bottom: 2px solid #3a3a3a;
+            padding-bottom: 5px;
+            color: #00adb5;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label {
+            font-size: 0.85rem;
+            color: #cccccc;
+            display: flex;
+            justify-content: space-between;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .color-pickers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .color-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: 2px solid #555;
+            border-radius: 50%;
+        }
+        .btn-main {
+            padding: 14px;
+            background-color: #00adb5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-main:hover {
+            background-color: #00888e;
+        }
+        .btn-sub {
+            padding: 8px;
+            background-color: #444;
+            color: #ccc;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .btn-sub:hover {
+            background-color: #555;
+        }
+    </style>
+
+    <!-- Three.js + Loaders + Exporters -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
+    <!-- JS QR Code Generator Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+
+    <div id="sidebar">
+        <h2>Typ Cedulky</h2>
+        <div class="control-group">
+            <label for="modeSelect">Vyberte režim:</label>
+            <select id="modeSelect">
+                <option value="text">Cedulka s textem (cedulka.stl)</option>
+                <option value="qr">Cedulka s QR kódem (qr.stl)</option>
+            </select>
+        </div>
+
+        <!-- SEKTOR TEXT -->
+        <div id="sectionText">
+            <h2>Nastavení Textu</h2>
+            <div class="control-group">
+                <label>Vlastní Text:</label>
+                <input type="text" id="textInput" value="-20%">
+            </div>
+            <div class="control-group">
+                <label>Velikost Písma: <span id="val_Velikost_Pisma">17</span></label>
+                <input type="range" id="Velikost_Pisma" min="5" max="40" step="1" value="17">
+            </div>
+            <div class="control-group">
+                <label>Výška Písma (Extruze): <span id="val_Vyska_Pisma">3</span></label>
+                <input type="range" id="Vyska_Pisma" min="0.5" max="10" step="0.5" value="3">
+            </div>
+        </div>
+
+        <!-- SEKTOR QR KÓD -->
+        <div id="sectionQR" style="display: none;">
+            <h2>Nastavení QR Kódu</h2>
+            <div class="control-group">
+                <label>URL / Text pro QR:</label>
+                <input type="text" id="qrInput" value="https://example.com">
+            </div>
+            <div class="control-group">
+                <label>Výška QR (Extruze): <span id="val_Vyska_QR">3</span></label>
+                <input type="range" id="Vyska_QR" min="0.5" max="10" step="0.5" value="3">
+            </div>
+        </div>
+
+        <h2>Barevné nastavení</h2>
+        <div class="color-pickers">
+            <div class="color-unit">
+                <label>Stojánek</label>
+                <input type="color" id="Barva_Stojanku" value="#222222">
+            </div>
+            <div class="color-unit">
+                <label>Cedulka</label>
+                <input type="color" id="Barva_Cedulky" value="#ff0000">
+            </div>
+            <div class="color-unit">
+                <label id="lblBarvaPrvku">Text/QR</label>
+                <input type="color" id="Barva_Textu" value="#ffffff">
+            </div>
+        </div>
+
+        <h2>Export</h2>
+        <button id="btnExportSTL" class="btn-main">Stáhnout kompletní STL</button>
+        <button id="btnExportSCAD" class="btn-sub">Stáhnout .SCAD kód</button>
+    </div>
+
+    <div id="viewport"></div>
+
+    <script>
+        // --- 1. INITIAL SCENE ---
+        const container = document.getElementById('viewport');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a1a);
+
+        const modelGroup = new THREE.Group();
+        scene.add(modelGroup);
+
+        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, -120, 80);
+        camera.up.set(0, 0, 1);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // Osvětlení
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight1.position.set(50, -50, 100);
+        scene.add(dirLight1);
+
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+        dirLight2.position.set(-50, 50, -50);
+        scene.add(dirLight2);
+
+        // --- 2. MATERIÁLY A LOADERY ---
+        const stlLoader = new THREE.STLLoader();
+        const fontLoader = new THREE.FontLoader();
+
+        const matStojanek = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
+        const matCedulka = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 });
+        const matPrvek = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }); // Pro text i QR
+
+        let meshStojanek, meshCedulka, meshPrvek;
+        let loadedFont = null;
+
+        // Transformace z původního nastavení
+        const config = {
+            Posun_X: 10,
+            Posun_Y: -4.5,
+            Posun_Z: 32,
+            Rotace_X: -119.1 * (Math.PI / 180),
+            Rotace_Y: 180 * (Math.PI / 180),
+            Rotace_Z: 0
+        };
+
+        // --- 3. NAČÍTÁNÍ STL SOUBORŮ ---
+        function loadSTL(filename, material, onLoaded) {
+            stlLoader.load(
+                filename,
+                (geometry) => {
+                    const mesh = new THREE.Mesh(geometry, material);
+                    modelGroup.add(mesh);
+                    onLoaded(mesh);
+                },
+                undefined,
+                (err) => {
+                    console.warn(`Soubor ${filename} nebyl nalezen na serveru, vytvořím náhradní geometrii.`);
+                    let geo = filename.includes('stojanek') 
+                        ? new THREE.BoxGeometry(60, 40, 10) 
+                        : new THREE.BoxGeometry(80, 5, 40);
+                    const mesh = new THREE.Mesh(geo, material);
+                    modelGroup.add(mesh);
+                    onLoaded(mesh);
+                }
+            );
+        }
+
+        // Načtení stojánku (trvalý)
+        loadSTL('stojanek.stl', matStojanek, (m) => meshStojanek = m);
+
+        // Načtení cedulky na základě vybraného režimu
+        function updateCedulkaMesh() {
+            if (meshCedulka) {
+                modelGroup.remove(meshCedulka);
+                if (meshCedulka.geometry) meshCedulka.geometry.dispose();
+            }
+            const mode = document.getElementById('modeSelect').value;
+            const filename = (mode === 'text') ? 'cedulka.stl' : 'qr.stl';
+            loadSTL(filename, matCedulka, (m) => meshCedulka = m);
+        }
+
+        updateCedulkaMesh(); // Inic. načtení cedulky
+
+        // --- 4. GENERACE A UPDATE OBSAHU (TEXT / QR) ---
+        fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
+            loadedFont = font;
+            updateContent();
+        });
+
+        function createQRGeometry(text, targetSizeMm = 60, height = 3) {
+            // Vytvoření QR kódu pomocí qrcode-generator
+            const qr = qrcode(0, 'M');
+            qr.addData(text || " ");
+            qr.make();
+
+            const moduleCount = qr.getModuleCount();
+            const cellSize = targetSizeMm / moduleCount;
+
+            const groupGeo = new THREE.BufferGeometry();
+            const geometries = [];
+
+            // Generování 3D kostek pro černé čtverečky QR kódu
+            for (let r = 0; r < moduleCount; r++) {
+                for (let c = 0; c < moduleCount; c++) {
+                    if (qr.isDark(r, c)) {
+                        const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
+                        
+                        // Pozicování jednotlivých buněk (středění QR kódu kolem [0,0,0])
+                        const x = (c + 0.5) * cellSize - targetSizeMm / 2;
+                        const y = -((r + 0.5) * cellSize - targetSizeMm / 2);
+                        boxGeo.translate(x, y, height / 2);
+
+                        geometries.push(boxGeo);
+                    }
+                }
+            }
+
+            if (geometries.length === 0) return new THREE.BufferGeometry();
+
+            // Sloučení všech částí do jedné geometrie pro optimalizaci
+            return THREE.BufferGeometryUtils 
+                ? THREE.BufferGeometryUtils.mergeBufferGeometries(geometries)
+                : mergeGeometriesManual(geometries);
+        }
+
+        // Náhradní funkce pro sloučení geometrií, pokud není načten BufferGeometryUtils
+        function mergeGeometriesManual(geometries) {
+            const merged = new THREE.Geometry ? new THREE.Geometry() : null;
+            // Použijeme jednoduchou skupinu (Group), pokud nejde o jednoduché vygenerování
+            const group = new THREE.Group();
+            geometries.forEach(geo => {
+                const m = new THREE.Mesh(geo);
+                group.add(m);
+            });
+            return group;
+        }
+
+        function updateContent() {
+            const mode = document.getElementById('modeSelect').value;
+
+            if (meshPrvek) {
+                modelGroup.remove(meshPrvek);
+                meshPrvek = null;
+            }
+
+            if (mode === 'text') {
+                if (!loadedFont) return;
+                const textStr = document.getElementById('textInput').value || " ";
+                const size = parseFloat(document.getElementById('Velikost_Pisma').value);
+                const height = parseFloat(document.getElementById('Vyska_Pisma').value);
+
+                const textGeo = new THREE.TextGeometry(textStr, {
+                    font: loadedFont,
+                    size: size,
+                    height: height,
+                    curveSegments: 12
+                });
+                textGeo.computeBoundingBox();
+                textGeo.center();
+
+                meshPrvek = new THREE.Mesh(textGeo, matPrvek);
+            } else {
+                const qrText = document.getElementById('qrInput').value || " ";
+                const height = parseFloat(document.getElementById('Vyska_QR').value);
+
+                // Generujeme QR o rozměru 60x60 mm (6x6 cm)
+                const qrResult = createQRGeometry(qrText, 60, height);
+                
+                if (qrResult instanceof THREE.BufferGeometry) {
+                    meshPrvek = new THREE.Mesh(qrResult, matPrvek);
+                } else {
+                    // Fallback pokud se vrací Group místo sloučené geometrie
+                    meshPrvek = qrResult;
+                    meshPrvek.children.forEach(child => child.material = matPrvek);
+                }
+            }
+
+            // Aplikování stejného umístění a rotace na Text i QR kód
+            meshPrvek.position.set(config.Posun_X, config.Posun_Y, config.Posun_Z);
+            meshPrvek.rotation.set(config.Rotace_X, config.Rotace_Y, config.Rotace_Z, 'XYZ');
+
+            modelGroup.add(meshPrvek);
+        }
+
+        // --- 5. INTERAKCE A EVENTY ---
+        document.getElementById('modeSelect').addEventListener('change', (e) => {
+            const isText = e.target.value === 'text';
+            document.getElementById('sectionText').style.display = isText ? 'block' : 'none';
+            document.getElementById('sectionQR').style.display = isText ? 'none' : 'block';
+            document.getElementById('lblBarvaPrvku').innerText = isText ? 'Text' : 'QR Kód';
+            
+            updateCedulkaMesh();
+            updateContent();
+        });
+
+        document.getElementById('textInput').addEventListener('input', updateContent);
+        document.getElementById('qrInput').addEventListener('input', updateContent);
+
+        ['Velikost_Pisma', 'Vyska_Pisma', 'Vyska_QR'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const valElem = document.getElementById('val_' + id);
+                if (valElem) valElem.innerText = e.target.value;
+                updateContent();
+            });
+        });
+
+        document.getElementById('Barva_Stojanku').addEventListener('input', (e) => matStojanek.color.set(e.target.value));
+        document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
+        document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
+
+        // --- 6. EXPORT STL SOUBORU ---
+        document.getElementById('btnExportSTL').addEventListener('click', () => {
+            const exporter = new THREE.STLExporter();
+            const result = exporter.parse(modelGroup, { binary: true });
+
+            const blob = new Blob([result], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'vystup_cedulka.stl';
+            link.click();
+        });
+
+        // --- 7. EXPORT SCAD SOUBORU ---
+        document.getElementById('btnExportSCAD').addEventListener('click', () => {
+            const mode = document.getElementById('modeSelect').value;
+            let scadContent = "";
+
+            if (mode === 'text') {
+                const textVal = document.getElementById('textInput').value;
+                const sizeVal = document.getElementById('Velikost_Pisma').value;
+                const heightVal = document.getElementById('Vyska_Pisma').value;
+
+                scadContent = `/* [Nastavení Textu] */
+Vlastni_Text = "${textVal}"; 
+Velikost_Pisma = ${sizeVal}; 
+Vyska_Pisma = ${heightVal}; 
+Pismo = "Montserrat:style=Bold"; 
+
+/* [Barevné nastavení pro AMS] */
+Barva_Stojanku = "${document.getElementById('Barva_Stojanku').value}"; 
+Barva_Cedulky = "${document.getElementById('Barva_Cedulky').value}"; 
+Barva_Textu = "${document.getElementById('Barva_Textu').value}"; 
+
+/* --- LOGIKA GENERUJÍCÍ MODEL --- */
+color(Barva_Stojanku) { import("stojanek.stl"); }
+color(Barva_Cedulky) { import("cedulka.stl"); }
+color(Barva_Textu) {
+    translate([${config.Posun_X}, ${config.Posun_Y}, ${config.Posun_Z}])
+    rotate([${config.Rotace_X * 180 / Math.PI}, ${config.Rotace_Y * 180 / Math.PI}, ${config.Rotace_Z * 180 / Math.PI}])
+    linear_extrude(height = Vyska_Pisma) {
+        text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
+    }
+}
+`;
+            } else {
+                const qrVal = document.getElementById('qrInput').value;
+                const heightVal = document.getElementById('Vyska_QR').value;
+
+                scadContent = `/* [Nastavení QR Cedulky] */
+QR_Text = "${qrVal}"; 
+Vyska_QR = ${heightVal}; 
+
+/* [Barevné nastavení pro AMS] */
+Barva_Stojanku = "${document.getElementById('Barva_Stojanku').value}"; 
+Barva_Cedulky = "${document.getElementById('Barva_Cedulky').value}"; 
+Barva_QR = "${document.getElementById('Barva_Textu').value}"; 
+
+/* --- LOGIKA GENERUJÍCÍ MODEL --- */
+color(Barva_Stojanku) { import("stojanek.stl"); }
+color(Barva_Cedulky) { import("qr.stl"); }
+// QR kód se v OpenSCAD generuje ze souboru či modulu
+`;
+            }
+
+            const blob = new Blob([scadContent], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'cedulka.scad';
+            link.click();
+        });
+
+        // --- 8. RENDER LOOP & RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
