@@ -234,18 +234,18 @@
 
         const matStojanek = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
         const matCedulka = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 });
-        const matPrvek = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 }); // Pro text i QR
+        const matPrvek = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
 
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Transformace z původního nastavení
+        // Opravený objekt s čárkami a převodem stupňů na radiány
         const config = {
             Posun_X: 10,
             Posun_Y: -4.5,
             Posun_Z: 32,
-            Rotace_X: -119.1
-            Rotace_Y: 180
+            Rotace_X: -119.1 * (Math.PI / 180),
+            Rotace_Y: 180 * (Math.PI / 180),
             Rotace_Z: 0
         };
 
@@ -271,10 +271,9 @@
             );
         }
 
-        // Načtení stojánku (trvalý)
+        // Načtení stojánku
         loadSTL('stojanek.stl', matStojanek, (m) => meshStojanek = m);
 
-        // Načtení cedulky na základě vybraného režimu
         function updateCedulkaMesh() {
             if (meshCedulka) {
                 modelGroup.remove(meshCedulka);
@@ -285,7 +284,7 @@
             loadSTL(filename, matCedulka, (m) => meshCedulka = m);
         }
 
-        updateCedulkaMesh(); // Inic. načtení cedulky
+        updateCedulkaMesh();
 
         // --- 4. GENERACE A UPDATE OBSAHU (TEXT / QR) ---
         fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
@@ -293,8 +292,8 @@
             updateContent();
         });
 
-        function createQRGeometry(text, targetSizeMm = 60, height = 3) {
-            // Vytvoření QR kódu pomocí qrcode-generator
+        // Stabilní generátor QR kódu pomocí THREE.Group
+        function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
             const qr = qrcode(0, 'M');
             qr.addData(text || " ");
             qr.make();
@@ -302,43 +301,21 @@
             const moduleCount = qr.getModuleCount();
             const cellSize = targetSizeMm / moduleCount;
 
-            const groupGeo = new THREE.BufferGeometry();
-            const geometries = [];
+            const qrGroup = new THREE.Group();
+            const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
 
-            // Generování 3D kostek pro černé čtverečky QR kódu
             for (let r = 0; r < moduleCount; r++) {
                 for (let c = 0; c < moduleCount; c++) {
                     if (qr.isDark(r, c)) {
-                        const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
-                        
-                        // Pozicování jednotlivých buněk (středění QR kódu kolem [0,0,0])
+                        const cellMesh = new THREE.Mesh(boxGeo, material);
                         const x = (c + 0.5) * cellSize - targetSizeMm / 2;
                         const y = -((r + 0.5) * cellSize - targetSizeMm / 2);
-                        boxGeo.translate(x, y, height / 2);
-
-                        geometries.push(boxGeo);
+                        cellMesh.position.set(x, y, height / 2);
+                        qrGroup.add(cellMesh);
                     }
                 }
             }
-
-            if (geometries.length === 0) return new THREE.BufferGeometry();
-
-            // Sloučení všech částí do jedné geometrie pro optimalizaci
-            return THREE.BufferGeometryUtils 
-                ? THREE.BufferGeometryUtils.mergeBufferGeometries(geometries)
-                : mergeGeometriesManual(geometries);
-        }
-
-        // Náhradní funkce pro sloučení geometrií, pokud není načten BufferGeometryUtils
-        function mergeGeometriesManual(geometries) {
-            const merged = new THREE.Geometry ? new THREE.Geometry() : null;
-            // Použijeme jednoduchou skupinu (Group), pokud nejde o jednoduché vygenerování
-            const group = new THREE.Group();
-            geometries.forEach(geo => {
-                const m = new THREE.Mesh(geo);
-                group.add(m);
-            });
-            return group;
+            return qrGroup;
         }
 
         function updateContent() {
@@ -369,19 +346,11 @@
                 const qrText = document.getElementById('qrInput').value || " ";
                 const height = parseFloat(document.getElementById('Vyska_QR').value);
 
-                // Generujeme QR o rozměru 60x60 mm (6x6 cm)
-                const qrResult = createQRGeometry(qrText, 60, height);
-                
-                if (qrResult instanceof THREE.BufferGeometry) {
-                    meshPrvek = new THREE.Mesh(qrResult, matPrvek);
-                } else {
-                    // Fallback pokud se vrací Group místo sloučené geometrie
-                    meshPrvek = qrResult;
-                    meshPrvek.children.forEach(child => child.material = matPrvek);
-                }
+                // Generování 3D QR kódu přes skupinu bloků
+                meshPrvek = createQRMesh(qrText, 60, height, matPrvek);
             }
 
-            // Aplikování stejného umístění a rotace na Text i QR kód
+            // Aplikování stejného umístění a rotace
             meshPrvek.position.set(config.Posun_X, config.Posun_Y, config.Posun_Z);
             meshPrvek.rotation.set(config.Rotace_X, config.Rotace_Y, config.Rotace_Z, 'XYZ');
 
@@ -474,7 +443,6 @@ Barva_QR = "${document.getElementById('Barva_Textu').value}";
 /* --- LOGIKA GENERUJÍCÍ MODEL --- */
 color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("qr.stl"); }
-// QR kód se v OpenSCAD generuje ze souboru či modulu
 `;
             }
 
