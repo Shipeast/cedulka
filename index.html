@@ -239,22 +239,24 @@
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Původní parametry pro text
+        const UHEL_RAD = 119.1 * (Math.PI / 180);
+
+        // Parametry pro Text (+0.2mm nahoru, +0.2mm doprava)
+        const POSUN_NAHORU_TEXT = 0.3;
         const configText = {
-            Posun_X: 10.4,
-            Posun_Y: -4.5,
-            Posun_Z: 32,
-            Rotace_X: 119.1 * (Math.PI / 180),
+            Posun_X: 10.0,
+            Posun_Y: -4.5 + (POSUN_NAHORU_TEXT * Math.cos(UHEL_RAD)),
+            Posun_Z: 32 + (POSUN_NAHORU_TEXT * Math.sin(UHEL_RAD)),
+            Rotace_X: UHEL_RAD,
             Rotace_Y: 180 * (Math.PI / 180),
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (upraveno: Posun_X = 10.4 pro +0.1mm doprava)
-        const POSUN_NAHORU_QR = 14.5; 
-        const UHEL_RAD = 119.1 * (Math.PI / 180);
+        // Parametry pro QR Kód (Posun_X upraven na 10.0, POSUN_NAHORU navýšen na 14.8mm pro posun o +0.2mm nahoru)
+        const POSUN_NAHORU_QR = 14.8; 
         
         const configQR = {
-            Posun_X: 10.4, 
+            Posun_X: 10.0, 
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
             Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
             Rotace_X: UHEL_RAD,
@@ -431,7 +433,7 @@ Barva_Textu = "${document.getElementById('Barva_Textu').value}";
 color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("cedulka.stl"); }
 color(Barva_Textu) {
-    translate([${configText.Posun_X}, ${configText.Posun_Y}, ${configText.Posun_Z}])
+    translate([${configText.Posun_X.toFixed(2)}, ${configText.Posun_Y.toFixed(2)}, ${configText.Posun_Z.toFixed(2)}])
     rotate([119.1, 180, 0])
     linear_extrude(height = Vyska_Pisma) {
         text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
@@ -475,7 +477,7 @@ color(Barva_QR) {
         // --- 8. RENDER LOOP & RESIZE ---
         window.addEventListener('resize', () => {
             camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
+            camera.updateMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
         });
 
