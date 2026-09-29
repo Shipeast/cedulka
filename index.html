@@ -249,12 +249,12 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (úprava posunu nahoru + vycentrování)
-        const POSUN_NAHORU_QR = 22; // Zvětšeno z 8mm na 22mm (posun výše)
+        // Parametry pro QR Kód (posunutí o 5mm dolů a 9mm doleva)
+        const POSUN_NAHORU_QR = 17; // Sníženo z 22 mm na 17 mm (posun o 5mm dolů)
         const UHEL_RAD = 119.1 * (Math.PI / 180);
         
         const configQR = {
-            Posun_X: 0, // Vycentrováno na střed osy X
+            Posun_X: 9, // Posun o +9mm pro posun vlevo z pohledu diváka (kvůli 180° rotaci)
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
             Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
             Rotace_X: UHEL_RAD,
