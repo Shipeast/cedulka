@@ -239,12 +239,12 @@
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Nastavení konfigurace (Rotace_X opravena na -29.1°)
+        // Nastavení konfigurace (Rotace_X nastavena na 119.1°)
         const config = {
             Posun_X: 10,
             Posun_Y: -4.5,
             Posun_Z: 32,
-            Rotace_X: -29.1 * (Math.PI / 180),
+            Rotace_X: 119.1 * (Math.PI / 180),
             Rotace_Y: 180 * (Math.PI / 180),
             Rotace_Z: 0
         };
@@ -418,7 +418,7 @@ color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("cedulka.stl"); }
 color(Barva_Textu) {
     translate([${config.Posun_X}, ${config.Posun_Y}, ${config.Posun_Z}])
-    rotate([-29.1, 180, 0])
+    rotate([119.1, 180, 0])
     linear_extrude(height = Vyska_Pisma) {
         text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
     }
