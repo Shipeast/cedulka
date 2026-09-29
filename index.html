@@ -239,12 +239,12 @@
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
 
-        // Opravený objekt s čárkami a převodem stupňů na radiány
+        // Nastavení konfigurace (Rotace_X opravena na -29.1°)
         const config = {
             Posun_X: 10,
             Posun_Y: -4.5,
             Posun_Z: 32,
-            Rotace_X: -119.1 * (Math.PI / 180),
+            Rotace_X: -29.1 * (Math.PI / 180),
             Rotace_Y: 180 * (Math.PI / 180),
             Rotace_Z: 0
         };
@@ -292,7 +292,6 @@
             updateContent();
         });
 
-        // Stabilní generátor QR kódu pomocí THREE.Group
         function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
             const qr = qrcode(0, 'M');
             qr.addData(text || " ");
@@ -346,11 +345,9 @@
                 const qrText = document.getElementById('qrInput').value || " ";
                 const height = parseFloat(document.getElementById('Vyska_QR').value);
 
-                // Generování 3D QR kódu přes skupinu bloků
                 meshPrvek = createQRMesh(qrText, 60, height, matPrvek);
             }
 
-            // Aplikování stejného umístění a rotace
             meshPrvek.position.set(config.Posun_X, config.Posun_Y, config.Posun_Z);
             meshPrvek.rotation.set(config.Rotace_X, config.Rotace_Y, config.Rotace_Z, 'XYZ');
 
@@ -421,7 +418,7 @@ color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("cedulka.stl"); }
 color(Barva_Textu) {
     translate([${config.Posun_X}, ${config.Posun_Y}, ${config.Posun_Z}])
-    rotate([${config.Rotace_X * 180 / Math.PI}, ${config.Rotace_Y * 180 / Math.PI}, ${config.Rotace_Z * 180 / Math.PI}])
+    rotate([-29.1, 180, 0])
     linear_extrude(height = Vyska_Pisma) {
         text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
     }
