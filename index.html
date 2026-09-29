@@ -241,7 +241,7 @@
 
         // Původní parametry pro text
         const configText = {
-            Posun_X: 10.5,
+            Posun_X: 10.4,
             Posun_Y: -4.5,
             Posun_Z: 32,
             Rotace_X: 119.1 * (Math.PI / 180),
@@ -249,12 +249,12 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (upraveno: +0.5mm nahoru -> POSUN_NAHORU_QR = 14.5, +0.5mm doprava -> Posun_X = 10.5)
+        // Parametry pro QR Kód (upraveno: Posun_X = 10.4 pro +0.1mm doprava)
         const POSUN_NAHORU_QR = 14.5; 
         const UHEL_RAD = 119.1 * (Math.PI / 180);
         
         const configQR = {
-            Posun_X: 10.5, 
+            Posun_X: 10.4, 
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
             Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
             Rotace_X: UHEL_RAD,
@@ -475,7 +475,7 @@ color(Barva_QR) {
         // --- 8. RENDER LOOP & RESIZE ---
         window.addEventListener('resize', () => {
             camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateMatrix();
+            camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
         });
 
