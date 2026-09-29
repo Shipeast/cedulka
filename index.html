@@ -141,12 +141,12 @@
             <label for="modeSelect">Vyberte režim:</label>
             <select id="modeSelect">
                 <option value="text">Cedulka s textem (cedulka.stl)</option>
-                <option value="qr">Cedulka s QR kódem (qr.stl)</option>
+                <option value="qr" selected>Cedulka s QR kódem (qr.stl)</option>
             </select>
         </div>
 
         <!-- SEKTOR TEXT -->
-        <div id="sectionText">
+        <div id="sectionText" style="display: none;">
             <h2>Nastavení Textu</h2>
             <div class="control-group">
                 <label>Vlastní Text:</label>
@@ -163,7 +163,7 @@
         </div>
 
         <!-- SEKTOR QR KÓD -->
-        <div id="sectionQR" style="display: none;">
+        <div id="sectionQR">
             <h2>Nastavení QR Kódu</h2>
             <div class="control-group">
                 <label>URL / Text pro QR:</label>
@@ -186,7 +186,7 @@
                 <input type="color" id="Barva_Cedulky" value="#ff0000">
             </div>
             <div class="color-unit">
-                <label id="lblBarvaPrvku">Text/QR</label>
+                <label id="lblBarvaPrvku">QR Kód</label>
                 <input type="color" id="Barva_Textu" value="#ffffff">
             </div>
         </div>
@@ -249,12 +249,12 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (posun +8 mm nahoru pod úhlem 119.1°, střed na X=0)
-        const POSUN_NAHORU_QR = 8; // mm
+        // Parametry pro QR Kód (úprava posunu nahoru + vycentrování)
+        const POSUN_NAHORU_QR = 22; // Zvětšeno z 8mm na 22mm (posun výše)
         const UHEL_RAD = 119.1 * (Math.PI / 180);
         
         const configQR = {
-            Posun_X: 0,
+            Posun_X: 0, // Vycentrováno na střed osy X
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
             Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
             Rotace_X: UHEL_RAD,
@@ -276,7 +276,7 @@
                     console.warn(`Soubor ${filename} nebyl nalezen na serveru, vytvořím náhradní geometrii.`);
                     let geo = filename.includes('stojanek') 
                         ? new THREE.BoxGeometry(60, 40, 10) 
-                        : new THREE.BoxGeometry(80, 5, 80); // tloušťka qr.stl = 5mm
+                        : new THREE.BoxGeometry(80, 5, 80);
                     const mesh = new THREE.Mesh(geo, material);
                     modelGroup.add(mesh);
                     onLoaded(mesh);
@@ -305,7 +305,6 @@
             updateContent();
         });
 
-        // Generování QR kódu přesně 60x60 mm (6x6 cm) se středem na (0,0)
         function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
             const qr = qrcode(0, 'M');
             qr.addData(text || " ");
@@ -361,7 +360,6 @@
                 const qrText = document.getElementById('qrInput').value || " ";
                 const height = parseFloat(document.getElementById('Vyska_QR').value);
 
-                // Velikost nastavitelná na 60mm (6 cm)
                 meshPrvek = createQRMesh(qrText, 60, height, matPrvek);
                 meshPrvek.position.set(configQR.Posun_X, configQR.Posun_Y, configQR.Posun_Z);
                 meshPrvek.rotation.set(configQR.Rotace_X, configQR.Rotace_Y, configQR.Rotace_Z, 'XYZ');
@@ -458,7 +456,7 @@ Barva_QR = "${document.getElementById('Barva_Textu').value}";
 color(Barva_Stojanku) { import("stojanek.stl"); }
 color(Barva_Cedulky) { import("qr.stl"); }
 color(Barva_QR) {
-    translate([${configQR.Posun_X}, ${configQR.Posun_Y}, ${configQR.Posun_Z}])
+    translate([${configQR.Posun_X.toFixed(2)}, ${configQR.Posun_Y.toFixed(2)}, ${configQR.Posun_Z.toFixed(2)}])
     rotate([119.1, 180, 0])
     translate([0, 0, 0]) {
         // Vygenerovaný QR kód (velikost 60x60mm)
