@@ -308,42 +308,38 @@
 
         function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
             const qr = getQRGenerator(text);
-            const moduleCount = qr.getModuleCount();
-            const cellSize = targetSizeMm / moduleCount;
+            const count = qr.getModuleCount();
+            const cellSize = targetSizeMm / count;
 
-            const qrGroup = new THREE.Group();
-            
-            // Sloučíme všechny čtverečky do jedné geometrie pro správné vycentrování pivotu
-            const geometries = [];
+            const shapes = [];
 
-            for (let r = 0; r < moduleCount; r++) {
-                for (let c = 0; c < moduleCount; c++) {
+            for (let r = 0; r < count; r++) {
+                for (let c = 0; c < count; c++) {
                     if (qr.isDark(r, c)) {
-                        const boxGeo = new THREE.BoxGeometry(cellSize, cellSize, height);
-                        
-                        // Pozice každého elementu (r, c)
-                        const x = c * cellSize;
-                        const y = (moduleCount - 1 - r) * cellSize;
-                        const z = height / 2;
+                        // Vypočteme pozici od středu [0, 0]
+                        const x = (c - count / 2) * cellSize;
+                        const y = (count / 2 - r - 1) * cellSize;
 
-                        boxGeo.translate(x, y, z);
-                        geometries.push(boxGeo);
+                        const shape = new THREE.Shape();
+                        shape.moveTo(x, y);
+                        shape.lineTo(x + cellSize, y);
+                        shape.lineTo(x + cellSize, y + cellSize);
+                        shape.lineTo(x, y + cellSize);
+                        shape.closePath();
+                        shapes.push(shape);
                     }
                 }
             }
 
-            // Pokud máme geometrie, sloučíme je nebo je vložíme s posunem středu
-            const mergedGroup = new THREE.Group();
-            const halfSize = targetSizeMm / 2;
+            const extrudeSettings = {
+                depth: height,
+                bevelEnabled: false
+            };
 
-            geometries.forEach(geo => {
-                // Vycentrování: posuneme geometrii o polovinu celkové velikosti QR kódu zpět
-                geo.translate(-halfSize + (cellSize / 2), -halfSize + (cellSize / 2), 0);
-                const mesh = new THREE.Mesh(geo, material);
-                mergedGroup.add(mesh);
-            });
+            const geometry = new THREE.ExtrudeGeometry(shapes, extrudeSettings);
+            geometry.center(); // Natvrdo vycentruje střed celé geometrie přesně na [0,0,0]
 
-            return mergedGroup;
+            return new THREE.Mesh(geometry, material);
         }
 
         function updateContent() {
