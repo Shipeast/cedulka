@@ -241,7 +241,7 @@
 
         // Původní parametry pro text
         const configText = {
-            Posun_X: 10,
+            Posun_X: 11,
             Posun_Y: -4.5,
             Posun_Z: 32,
             Rotace_X: 119.1 * (Math.PI / 180),
@@ -249,12 +249,12 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (posunutí o 5mm dolů a 9mm doleva)
-        const POSUN_NAHORU_QR = 17; // Sníženo z 22 mm na 17 mm (posun o 5mm dolů)
+        // Parametry pro QR Kód (upraveno: -1mm dolů -> POSUN_NAHORU_QR = 14, -1mm doleva -> Posun_X = 11)
+        const POSUN_NAHORU_QR = 14; 
         const UHEL_RAD = 119.1 * (Math.PI / 180);
         
         const configQR = {
-            Posun_X: 9, // Posun o +9mm pro posun vlevo z pohledu diváka (kvůli 180° rotaci)
+            Posun_X: 11, 
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
             Posun_Z: 32 + (POSUN_NAHORU_QR * Math.sin(UHEL_RAD)),
             Rotace_X: UHEL_RAD,
