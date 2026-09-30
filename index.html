@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>3D Konfigurátor Cedulky</title>
     <!-- Google Font Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,9 +19,11 @@
             font-family: 'Montserrat', sans-serif;
             display: flex;
             height: 100vh;
+            height: 100dvh; /* Pro správné zobrazení na mobilních prohlížečích */
             overflow: hidden;
             background-color: #1a1a1a;
             color: #ffffff;
+            flex-direction: row;
         }
         #sidebar {
             width: 380px;
@@ -33,10 +35,14 @@
             gap: 20px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.5);
             z-index: 10;
+            flex-shrink: 0;
         }
         #viewport {
             flex-grow: 1;
             position: relative;
+            width: 100%;
+            height: 100%;
+            touch-action: none; /* Zamezí nechtěnému skrolování stránky při gestech v 3D okno */
         }
         h2 {
             font-size: 1.1rem;
@@ -67,6 +73,7 @@
         }
         input[type="range"] {
             width: 100%;
+            height: 25px; /* Větší dotyková plocha pro mobil */
         }
         .color-pickers {
             display: grid;
@@ -83,8 +90,8 @@
         input[type="color"] {
             -webkit-appearance: none;
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             cursor: pointer;
         }
@@ -110,16 +117,36 @@
             background-color: #00888e;
         }
         .btn-sub {
-            padding: 8px;
+            padding: 10px;
             background-color: #444;
             color: #ccc;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
         .btn-sub:hover {
             background-color: #555;
+        }
+
+        /* RESPONSIVNÍ DESIGN PRO MOBILY A TABLETY */
+        @media (max-width: 800px) {
+            body {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                max-height: 45vh;
+                padding: 15px;
+                gap: 15px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            }
+            #viewport {
+                height: 55vh;
+            }
+            h2 {
+                font-size: 1rem;
+            }
         }
     </style>
 
@@ -157,8 +184,8 @@
                 <input type="range" id="Velikost_Pisma" min="5" max="40" step="1" value="17">
             </div>
             <div class="control-group">
-                <label>Výška Písma (Extruze): <span id="val_Vyska_Pisma">3</span></label>
-                <input type="range" id="Vyska_Pisma" min="0.5" max="10" step="0.5" value="3">
+                <label>Vystoupení Textu (Extruze): <span id="val_Vyska_Pisma">4.5</span> mm</label>
+                <input type="range" id="Vyska_Pisma" min="0.5" max="15" step="0.5" value="4.5">
             </div>
         </div>
 
@@ -170,7 +197,7 @@
                 <input type="text" id="qrInput" value="https://example.com">
             </div>
             <div class="control-group">
-                <label>Výška QR (Extruze): <span id="val_Vyska_QR">3</span></label>
+                <label>Výška QR (Extruze): <span id="val_Vyska_QR">3</span> mm</label>
                 <input type="range" id="Vyska_QR" min="0.5" max="10" step="0.5" value="3">
             </div>
         </div>
@@ -192,7 +219,7 @@
         </div>
 
         <h2>Export</h2>
-        <button id="btnExportSTL" class="btn-main">Stáhnout kompletní STL</button>
+        <button id="btnExportSTL" class="btn-main">Stáhnout STL (bez stojánku)</button>
         <button id="btnExportSCAD" class="btn-sub">Stáhnout .SCAD kód</button>
     </div>
 
@@ -212,6 +239,7 @@
         camera.up.set(0, 0, 1);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Optimalizace rozlišení pro displeje s vysokou hustotou (Retina/OLED)
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.appendChild(renderer.domElement);
 
@@ -241,7 +269,7 @@
 
         const UHEL_RAD = 119.1 * (Math.PI / 180);
 
-        // Parametry pro Text (+0.2mm nahoru, +0.2mm doprava)
+        // Parametry pro Text
         const POSUN_NAHORU_TEXT = 0.3;
         const configText = {
             Posun_X: 10.0,
@@ -252,9 +280,8 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód (Posun_X upraven na 10.0, POSUN_NAHORU navýšen na 14.8mm pro posun o +0.2mm nahoru)
+        // Parametry pro QR Kód
         const POSUN_NAHORU_QR = 14.8; 
-        
         const configQR = {
             Posun_X: 10.0, 
             Posun_Y: -4.5 + (POSUN_NAHORU_QR * Math.cos(UHEL_RAD)),
@@ -356,7 +383,16 @@
                 textGeo.center();
 
                 meshPrvek = new THREE.Mesh(textGeo, matPrvek);
-                meshPrvek.position.set(configText.Posun_X, configText.Posun_Y, configText.Posun_Z);
+                
+                const offsetZ = height / 2;
+                const normalY = Math.sin(UHEL_RAD) * offsetZ;
+                const normalZ = -Math.cos(UHEL_RAD) * offsetZ;
+
+                meshPrvek.position.set(
+                    configText.Posun_X, 
+                    configText.Posun_Y + normalY, 
+                    configText.Posun_Z + normalZ
+                );
                 meshPrvek.rotation.set(configText.Rotace_X, configText.Rotace_Y, configText.Rotace_Z, 'XYZ');
             } else {
                 const qrText = document.getElementById('qrInput').value || " ";
@@ -396,15 +432,20 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. EXPORT STL SOUBORU ---
+        // --- 6. EXPORT STL SOUBORU (BEZ STOJÁNKU) ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
-            const result = exporter.parse(modelGroup, { binary: true });
+            
+            const exportGroup = new THREE.Group();
+            if (meshCedulka) exportGroup.add(meshCedulka.clone());
+            if (meshPrvek) exportGroup.add(meshPrvek.clone());
+
+            const result = exporter.parse(exportGroup, { binary: true });
 
             const blob = new Blob([result], { type: 'application/octet-stream' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'vystup_cedulka.stl';
+            link.download = 'cedulka_s_prvkem.stl';
             link.click();
         });
 
@@ -474,11 +515,16 @@ color(Barva_QR) {
             link.click();
         });
 
-        // --- 8. RENDER LOOP & RESIZE ---
-        window.addEventListener('resize', () => {
+        // --- 8. RENDER LOOP & RESIZE (PRO MOBILY A TABLETY) ---
+        function onWindowResize() {
             camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateMatrix();
+            camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        window.addEventListener('resize', onWindowResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(onWindowResize, 200);
         });
 
         function animate() {
