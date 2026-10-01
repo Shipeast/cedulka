@@ -52,15 +52,10 @@
             height: 100%;
             touch-action: none;
             overflow: hidden;
-            background-color: #d8dcd6;
-            /* Obrácený maskovací vzor v neutrálních šedých a béžových tónech pro vysoký kontrast světlých i tmavých barev */
-            background-image: 
-                radial-gradient(circle at 20% 20%, #b8beb5 0%, #b8beb5 25%, transparent 26%),
-                radial-gradient(circle at 80% 30%, #a4aaa0 0%, #a4aaa0 20%, transparent 21%),
-                radial-gradient(circle at 40% 70%, #c4c8c1 0%, #c4c8c1 30%, transparent 31%),
-                radial-gradient(circle at 85% 80%, #90968c 0%, #90968c 22%, transparent 23%),
-                radial-gradient(circle at 10% 85%, #a4aaa0 0%, #a4aaa0 18%, transparent 19%);
-            background-size: 240px 240px;
+            background-color: #d2d7cf;
+            /* Konzistentní organic camo pozadí s různorodými nepravidelnými tvary */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cpath fill='%20b7beb3' d='M35 15 C60 5, 95 30, 80 60 C65 90, 20 85, 10 55 C0 25, 10 25, 35 15 Z'/%3E%3Cpath fill='%20a2a89d' d='M210 40 C240 20, 290 35, 300 70 C310 105, 260 120, 220 100 C180 80, 180 60, 210 40 Z'/%3E%3Cpath fill='%20c2c7be' d='M130 140 C170 120, 200 160, 180 195 C160 230, 110 210, 100 180 C90 150, 90 160, 130 140 Z'/%3E%3Cpath fill='%20a2a89d' d='M20 220 C50 190, 90 220, 80 260 C70 300, 20 310, 5 280 C-10 250, -10 250, 20 220 Z'/%3E%3Cpath fill='%20b7beb3' d='M250 210 C290 190, 315 240, 295 280 C275 320, 225 290, 220 260 C215 230, 210 230, 250 210 Z'/%3E%3C/svg%3E");
+            background-size: 320px 320px;
         }
 
         h2 {
@@ -198,7 +193,7 @@
             background-color: #e9ecef;
         }
 
-        /* MODÁLNÍ OKNO SWISS DESIGN */
+        /* MODÁLNÍ OKNO */
         .modal {
             display: none;
             position: fixed;
@@ -256,12 +251,9 @@
             width: 100%;
             height: auto;
             border-radius: 6px;
-            background-color: #d8dcd6;
-            background-image: 
-                radial-gradient(circle at 20% 20%, #b8beb5 0%, #b8beb5 25%, transparent 26%),
-                radial-gradient(circle at 80% 30%, #a4aaa0 0%, #a4aaa0 20%, transparent 21%),
-                radial-gradient(circle at 40% 70%, #c4c8c1 0%, #c4c8c1 30%, transparent 31%);
-            background-size: 120px 120px;
+            background-color: #d2d7cf;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cpath fill='%20b7beb3' d='M35 15 C60 5, 95 30, 80 60 C65 90, 20 85, 10 55 C0 25, 10 25, 35 15 Z'/%3E%3Cpath fill='%20a2a89d' d='M210 40 C240 20, 290 35, 300 70 C310 105, 260 120, 220 100 C180 80, 180 60, 210 40 Z'/%3E%3Cpath fill='%20c2c7be' d='M130 140 C170 120, 200 160, 180 195 C160 230, 110 210, 100 180 C90 150, 90 160, 130 140 Z'/%3E%3Cpath fill='%20a2a89d' d='M20 220 C50 190, 90 220, 80 260 C70 300, 20 310, 5 280 C-10 250, -10 250, 20 220 Z'/%3E%3Cpath fill='%20b7beb3' d='M250 210 C290 190, 315 240, 295 280 C275 320, 225 290, 220 260 C215 230, 210 230, 250 210 Z'/%3E%3C/svg%3E");
+            background-size: 160px 160px;
         }
         .gallery-item a {
             color: #00adb5;
@@ -590,14 +582,14 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. OPRAVENÉ NÁHLEDOVÉ FOTKY (PŘEDNÍ STRANA SPRÁVNĚ OTOČENÁ) ---
+        // --- 6. NÁHLEDOVÉ FOTKY S NOVÝM KOLMÝM POHLEDEM ---
         function renderMultipleViews() {
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
-            // Správné úhly namířené zepředu na text/QR kód
             const views = [
-                { name: "Přední pohled", pos: [0, 170, 35], target: [0, 0, 25] },
+                { name: "Přední pohled (přímý)", pos: [0, 170, 35], target: [0, 0, 25] },
+                { name: "Kolmý pohled na cedulku (+29.1°)", pos: [0, 128.8, 115.6], target: [0, -11, 38] },
                 { name: "Izometrický pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
                 { name: "Boční detail", pos: [150, 60, 50], target: [0, 0, 25] },
                 { name: "Pohled shora", pos: [0, 20, 180], target: [0, 0, 20] }
