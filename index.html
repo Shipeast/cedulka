@@ -53,7 +53,7 @@
             touch-action: none;
             overflow: hidden;
             background-color: #b0b4b8;
-            /* Neutrální monochromatické maskovací pozadí (vysoce kontrastní vůči všem barvám) */
+            /* Neutrální monochromatické maskovací pozadí */
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cpath fill='%23a2a7ac' d='M35 15 C60 5, 95 30, 80 60 C65 90, 20 85, 10 55 C0 25, 10 25, 35 15 Z'/%3E%3Cpath fill='%23c8cccf' d='M210 40 C240 20, 290 35, 300 70 C310 105, 260 120, 220 100 C180 80, 180 60, 210 40 Z'/%3E%3Cpath fill='%238e9398' d='M130 140 C170 120, 200 160, 180 195 C160 230, 110 210, 100 180 C90 150, 90 160, 130 140 Z'/%3E%3Cpath fill='%23c8cccf' d='M20 220 C50 190, 90 220, 80 260 C70 300, 20 310, 5 280 C-10 250, -10 250, 20 220 Z'/%3E%3Cpath fill='%23a2a7ac' d='M250 210 C290 190, 315 240, 295 280 C275 320, 225 290, 220 260 C215 230, 210 230, 250 210 Z'/%3E%3C/svg%3E");
             background-size: 320px 320px;
         }
@@ -193,75 +193,6 @@
             background-color: #e9ecef;
         }
 
-        /* MODÁLNÍ OKNO */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(33, 37, 41, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            padding: 20px;
-            overflow-y: auto;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-content {
-            background: #ffffff;
-            padding: 24px;
-            border-radius: 12px;
-            max-width: 860px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .close-btn {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-        }
-        .gallery-item {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            align-items: center;
-            border: 1px solid #e9ecef;
-        }
-        .gallery-item img {
-            width: 100%;
-            height: auto;
-            border-radius: 6px;
-            background-color: #b0b4b8;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'%3E%3Cpath fill='%23a2a7ac' d='M35 15 C60 5, 95 30, 80 60 C65 90, 20 85, 10 55 C0 25, 10 25, 35 15 Z'/%3E%3Cpath fill='%23c8cccf' d='M210 40 C240 20, 290 35, 300 70 C310 105, 260 120, 220 100 C180 80, 180 60, 210 40 Z'/%3E%3Cpath fill='%238e9398' d='M130 140 C170 120, 200 160, 180 195 C160 230, 110 210, 100 180 C90 150, 90 160, 130 140 Z'/%3E%3Cpath fill='%23c8cccf' d='M20 220 C50 190, 90 220, 80 260 C70 300, 20 310, 5 280 C-10 250, -10 250, 20 220 Z'/%3E%3Cpath fill='%23a2a7ac' d='M250 210 C290 190, 315 240, 295 280 C275 320, 225 290, 220 260 C215 230, 210 230, 250 210 Z'/%3E%3C/svg%3E");
-            background-size: 160px 160px;
-        }
-        .gallery-item a {
-            color: #00adb5;
-            text-decoration: none;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
         /* RESPONSIVNÍ DESIGN */
         @media (max-width: 800px) {
             body {
@@ -290,6 +221,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
     <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <!-- JSZip pro export fotek do ZIP archivu -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -357,21 +290,10 @@
         <div>
             <h2>Export a Náhledy</h2>
             <div class="btn-container">
-                <button id="btnRenderPhotos" class="btn btn-photo">Vygenerovat náhledové fotky</button>
+                <button id="btnRenderPhotos" class="btn btn-photo">Stáhnout fotky v ZIP</button>
                 <button id="btnExportSTL" class="btn btn-primary">Stáhnout STL model</button>
                 <button id="btnExportSCAD" class="btn btn-secondary">Stáhnout .SCAD kód</button>
             </div>
-        </div>
-    </div>
-
-    <!-- Modální okno pro náhledové fotky -->
-    <div id="photoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Vygenerované Náhledy</h2>
-                <button class="close-btn" onclick="closeModal()">Zavřít</button>
-            </div>
-            <div id="galleryGrid" class="gallery-grid"></div>
         </div>
     </div>
 
@@ -409,6 +331,11 @@
         const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
         dirLight2.position.set(-60, -80, 60);
         scene.add(dirLight2);
+
+        // --- PRELOAD MASK POZADÍ PRO EXPORT ---
+        const bgSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320' viewBox='0 0 320 320'><path fill='%23a2a7ac' d='M35 15 C60 5, 95 30, 80 60 C65 90, 20 85, 10 55 C0 25, 10 25, 35 15 Z'/><path fill='%23c8cccf' d='M210 40 C240 20, 290 35, 300 70 C310 105, 260 120, 220 100 C180 80, 180 60, 210 40 Z'/><path fill='%238e9398' d='M130 140 C170 120, 200 160, 180 195 C160 230, 110 210, 100 180 C90 150, 90 160, 130 140 Z'/><path fill='%23c8cccf' d='M20 220 C50 190, 90 220, 80 260 C70 300, 20 310, 5 280 C-10 250, -10 250, 20 220 Z'/><path fill='%23a2a7ac' d='M250 210 C290 190, 315 240, 295 280 C275 320, 225 290, 220 260 C215 230, 210 230, 250 210 Z'/></svg>`;
+        const bgPatternImage = new Image();
+        bgPatternImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(bgSvg);
 
         // --- 2. MATERIÁLY A LOADERY ---
         const stlLoader = new THREE.STLLoader();
@@ -582,53 +509,102 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. NÁHLEDOVÉ FOTKY S KOLMÝM POHLEDEM ---
-        function renderMultipleViews() {
+        // --- 6. EXPORT FOTEK S POZADÍM A VODOZNAKEM DO ZIP ---
+        async function renderAndExportZip() {
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
             const views = [
-                { name: "Přední pohled (přímý)", pos: [0, 170, 35], target: [0, 0, 25] },
-                { name: "Kolmý pohled na cedulku (+29.1°)", pos: [0, 128.8, 115.6], target: [0, -11, 38] },
-                { name: "Izometrický pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
-                { name: "Boční detail", pos: [150, 60, 50], target: [0, 0, 25] },
-                { name: "Pohled shora", pos: [0, 20, 180], target: [0, 0, 20] }
+                { name: "predni_pohled", pos: [0, 170, 35], target: [0, 0, 25] },
+                { name: "kolmy_pohled", pos: [0, 128.8, 115.6], target: [0, -11, 38] },
+                { name: "izometricky_pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
+                { name: "bocni_detail", pos: [150, 60, 50], target: [0, 0, 25] },
+                { name: "pohled_shora", pos: [0, 20, 180], target: [0, 0, 20] }
             ];
 
-            const galleryGrid = document.getElementById('galleryGrid');
-            galleryGrid.innerHTML = "";
+            const zip = new JSZip();
+            const btn = document.getElementById('btnRenderPhotos');
+            const originalText = btn.innerText;
+            btn.innerText = "Generuji ZIP...";
+            btn.disabled = true;
 
-            views.forEach((view, index) => {
+            const tempCanvas = document.createElement('canvas');
+            const width = renderer.domElement.width;
+            const height = renderer.domElement.height;
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const ctx = tempCanvas.getContext('2d');
+
+            for (let i = 0; i < views.length; i++) {
+                const view = views[i];
                 camera.position.set(...view.pos);
                 controls.target.set(...view.target);
                 controls.update();
                 renderer.render(scene, camera);
 
-                const dataURL = renderer.domElement.toDataURL('image/png');
+                // 1. Vykreslení šedého pozadí
+                ctx.fillStyle = "#b0b4b8";
+                ctx.fillRect(0, 0, width, height);
 
-                const item = document.createElement('div');
-                item.className = 'gallery-item';
-                item.innerHTML = `
-                    <img src="${dataURL}" alt="${view.name}">
-                    <span style="font-size:0.8rem; font-weight:600; color:#495057;">${view.name}</span>
-                    <a href="${dataURL}" download="nahled_${index + 1}.png">Stáhnout obrázek</a>
-                `;
-                galleryGrid.appendChild(item);
-            });
+                // 2. Vykreslení opakovaného maskovacího vzoru pozadí
+                if (bgPatternImage.complete) {
+                    const pattern = ctx.createPattern(bgPatternImage, 'repeat');
+                    ctx.fillStyle = pattern;
+                    ctx.fillRect(0, 0, width, height);
+                }
 
+                // 3. Vykreslení 3D renderu ze scénického plátna přes pozadí
+                ctx.drawImage(renderer.domElement, 0, 0);
+
+                // 4. Vykreslení vodoznaků shipeast.xyz
+                ctx.save();
+                ctx.font = `bold ${Math.round(width * 0.035)}px 'Montserrat', sans-serif`;
+                ctx.fillStyle = "rgba(255, 255, 255, 0.35)";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                // Umístění vodoznaků na několik pozic
+                const watermarks = [
+                    { x: width * 0.2, y: height * 0.2 },
+                    { x: width * 0.8, y: height * 0.2 },
+                    { x: width * 0.5, y: height * 0.5 },
+                    { x: width * 0.2, y: height * 0.8 },
+                    { x: width * 0.8, y: height * 0.8 }
+                ];
+
+                watermarks.forEach(wm => {
+                    ctx.save();
+                    ctx.translate(wm.x, wm.y);
+                    ctx.rotate(-20 * Math.PI / 180);
+                    ctx.fillText("shipeast.xyz", 0, 0);
+                    ctx.restore();
+                });
+                ctx.restore();
+
+                // Převod plátna na base64 a vložení do ZIP archivu
+                const dataUrl = tempCanvas.toDataURL('image/png');
+                const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                zip.file(`${i + 1}_${view.name}.png`, base64Data, { base64: true });
+            }
+
+            // Obnovení původní kamery
             camera.position.copy(origPos);
             controls.target.copy(origTarget);
             controls.update();
             renderer.render(scene, camera);
 
-            document.getElementById('photoModal').style.display = 'flex';
+            // Generování a stažení ZIP
+            const content = await zip.generateAsync({ type: "blob" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = 'nahledy_cedulka.zip';
+            link.click();
+
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
 
-        function closeModal() {
-            document.getElementById('photoModal').style.display = 'none';
-        }
-
-        document.getElementById('btnRenderPhotos').addEventListener('click', renderMultipleViews);
+        document.getElementById('btnRenderPhotos').addEventListener('click', renderAndExportZip);
 
         // --- 7. EXPORT STL ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
