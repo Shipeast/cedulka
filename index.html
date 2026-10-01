@@ -7,7 +7,7 @@
     <!-- Google Font Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -20,27 +20,31 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #1a1a1a;
-            color: #ffffff;
+            background-color: #f8f9fa;
+            color: #212529;
             font-family: 'Montserrat', sans-serif;
         }
         body {
             display: flex;
             flex-direction: row;
         }
+
+        /* SIDEBAR LIGHT THEME */
         #sidebar {
-            width: 380px;
-            background-color: #242424;
-            padding: 20px;
+            width: 360px;
+            background-color: #ffffff;
+            padding: 24px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
             gap: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.06);
             z-index: 10;
             flex-shrink: 0;
+            border-right: 1px solid #e9ecef;
         }
+        
         #viewport {
             flex-grow: 1;
             position: relative;
@@ -48,115 +52,183 @@
             height: 100%;
             touch-action: none;
             overflow: hidden;
+            background-color: #f4f5f7;
+            /* Vzor tečkovaného sešitu s křížkem každý 4. bod */
+            background-image: 
+                radial-gradient(#adb5bd 1.5px, transparent 1.5px),
+                url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M117 120h6v-6h-6v6zm0-120h6v6h-6V0zM0 117h6v6H0v-6zM0 0h6v6H0V0z' fill='%208c98a4' fill-opacity='0.4'/%3E%3C/svg%3E");
+            background-size: 30px 30px, 120px 120px;
+            background-position: 0 0, 0 0;
         }
+
         h2 {
-            font-size: 1.1rem;
-            border-bottom: 2px solid #3a3a3a;
-            padding-bottom: 5px;
-            color: #00adb5;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: #00888e;
+            margin-bottom: 4px;
         }
+
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
+
         label {
-            font-size: 0.85rem;
-            color: #cccccc;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #495057;
             display: flex;
             justify-content: space-between;
         }
+
         input[type="text"], select {
             width: 100%;
-            padding: 10px;
-            background: #333;
-            border: 1px solid #444;
-            color: #fff;
-            border-radius: 4px;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border: 1px solid #ced4da;
+            color: #212529;
+            border-radius: 8px;
             font-family: inherit;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
+        input[type="text"]:focus, select:focus {
+            border-color: #00adb5;
+            box-shadow: 0 0 0 3px rgba(0, 173, 181, 0.15);
+        }
+
         input[type="range"] {
             width: 100%;
-            height: 30px;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            outline: none;
             cursor: pointer;
+            accent-color: #00adb5;
         }
+
         .color-pickers {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            gap: 12px;
         }
+
         .color-unit {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             font-size: 0.75rem;
+            font-weight: 600;
+            color: #6c757d;
         }
+
         input[type="color"] {
             -webkit-appearance: none;
             border: none;
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             cursor: pointer;
             background: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         input[type="color"]::-webkit-color-swatch-wrapper {
             padding: 0;
         }
         input[type="color"]::-webkit-color-swatch {
-            border: 2px solid #555;
+            border: 2px solid #ffffff;
             border-radius: 50%;
         }
-        .btn-main {
-            padding: 14px;
-            background-color: #00adb5;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-main:hover {
-            background-color: #00888e;
-        }
-        .btn-sub {
-            padding: 10px;
-            background-color: #444;
-            color: #ccc;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
-        .btn-sub:hover {
-            background-color: #555;
+
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
         }
 
-        /* MODÁLNÍ OKNO PRO NÁHLEDY FOTEK */
+        .btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: transform 0.1s, background-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: #00adb5;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 173, 181, 0.25);
+        }
+        .btn-primary:hover {
+            background-color: #00939a;
+        }
+
+        .btn-video {
+            background-color: #ff9f43;
+            color: white;
+            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.25);
+        }
+        .btn-video:hover {
+            background-color: #ee872b;
+        }
+
+        .btn-photo {
+            background-color: #10ac84;
+            color: white;
+            box-shadow: 0 4px 12px rgba(16, 172, 132, 0.25);
+        }
+        .btn-photo:hover {
+            background-color: #0e9673;
+        }
+
+        .btn-secondary {
+            background-color: #f1f3f5;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        .btn-secondary:hover {
+            background-color: #e9ecef;
+        }
+
+        /* MODÁLNÍ OKNO SWISS DESIGN */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.85);
+            background: rgba(33, 37, 41, 0.6);
+            backdrop-filter: blur(4px);
             z-index: 100;
             padding: 20px;
             overflow-y: auto;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
         .modal-content {
-            background: #242424;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 900px;
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 860px;
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         }
         .modal-header {
             display: flex;
@@ -164,60 +236,57 @@
             align-items: center;
         }
         .close-btn {
-            background: #ff4444;
+            background: #ff6b6b;
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: 6px 14px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
         }
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
         }
         .gallery-item {
-            background: #1a1a1a;
-            border-radius: 6px;
-            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
             align-items: center;
+            border: 1px solid #e9ecef;
         }
         .gallery-item img {
             width: 100%;
             height: auto;
-            border-radius: 4px;
-            border: 1px solid #333;
+            border-radius: 6px;
+            background: #f4f5f7;
         }
         .gallery-item a {
             color: #00adb5;
             text-decoration: none;
-            font-size: 0.85rem;
-            font-weight: bold;
+            font-size: 0.8rem;
+            font-weight: 700;
         }
 
-        /* RESPONSIVNÍ DESIGN PRO MOBILY A TABLETY */
+        /* RESPONSIVNÍ DESIGN */
         @media (max-width: 800px) {
             body {
                 flex-direction: column-reverse;
             }
             #sidebar {
                 width: 100%;
-                height: 45vh;
-                max-height: 45vh;
-                padding: 15px;
-                gap: 15px;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+                height: 50vh;
+                max-height: 50vh;
+                padding: 16px;
+                gap: 16px;
             }
             #viewport {
                 width: 100%;
-                height: 55vh;
-            }
-            h2 {
-                font-size: 1rem;
+                height: 50vh;
             }
         }
     </style>
@@ -229,7 +298,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FontLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/TextGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
-    <!-- JS QR Code Generator Library -->
+    <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <!-- WebM Writer pro export 360 videa -->
     <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.2.0/webm-writer.js"></script>
@@ -239,13 +308,14 @@
     <div id="viewport"></div>
 
     <div id="sidebar">
-        <h2>Typ Cedulky</h2>
-        <div class="control-group">
-            <label for="modeSelect">Vyberte režim:</label>
-            <select id="modeSelect">
-                <option value="text">Cedulka s textem (cedulka.stl)</option>
-                <option value="qr" selected>Cedulka s QR kódem (qr.stl)</option>
-            </select>
+        <div>
+            <h2>Typ Cedulky</h2>
+            <div class="control-group" style="margin-top: 8px;">
+                <select id="modeSelect">
+                    <option value="text">Cedulka s textem (cedulka.stl)</option>
+                    <option value="qr" selected>Cedulka s QR kódem (qr.stl)</option>
+                </select>
+            </div>
         </div>
 
         <!-- SEKTOR TEXT -->
@@ -255,12 +325,12 @@
                 <label>Vlastní Text:</label>
                 <input type="text" id="textInput" value="-20%">
             </div>
-            <div class="control-group">
+            <div class="control-group" style="margin-top: 10px;">
                 <label>Velikost Písma: <span id="val_Velikost_Pisma">17</span></label>
                 <input type="range" id="Velikost_Pisma" min="5" max="40" step="1" value="17">
             </div>
-            <div class="control-group">
-                <label>Vystoupení Textu (Extruze): <span id="val_Vyska_Pisma">4.5</span> mm</label>
+            <div class="control-group" style="margin-top: 10px;">
+                <label>Vystoupení Textu: <span id="val_Vyska_Pisma">4.5</span> mm</label>
                 <input type="range" id="Vyska_Pisma" min="0.5" max="15" step="0.5" value="4.5">
             </div>
         </div>
@@ -272,40 +342,46 @@
                 <label>URL / Text pro QR:</label>
                 <input type="text" id="qrInput" value="https://example.com">
             </div>
-            <div class="control-group">
+            <div class="control-group" style="margin-top: 10px;">
                 <label>Výška QR (Extruze): <span id="val_Vyska_QR">3</span> mm</label>
                 <input type="range" id="Vyska_QR" min="0.5" max="10" step="0.5" value="3">
             </div>
         </div>
 
-        <h2>Barevné nastavení</h2>
-        <div class="color-pickers">
-            <div class="color-unit">
-                <label>Stojánek</label>
-                <input type="color" id="Barva_Stojanku" value="#222222">
-            </div>
-            <div class="color-unit">
-                <label>Cedulka</label>
-                <input type="color" id="Barva_Cedulky" value="#ff0000">
-            </div>
-            <div class="color-unit">
-                <label id="lblBarvaPrvku">QR Kód</label>
-                <input type="color" id="Barva_Textu" value="#ffffff">
+        <div>
+            <h2>Barvy</h2>
+            <div class="color-pickers" style="margin-top: 8px;">
+                <div class="color-unit">
+                    <label>Stojánek</label>
+                    <input type="color" id="Barva_Stojanku" value="#222222">
+                </div>
+                <div class="color-unit">
+                    <label>Cedulka</label>
+                    <input type="color" id="Barva_Cedulky" value="#ff0000">
+                </div>
+                <div class="color-unit">
+                    <label id="lblBarvaPrvku">QR Kód</label>
+                    <input type="color" id="Barva_Textu" value="#ffffff">
+                </div>
             </div>
         </div>
 
-        <h2>Export & Náhledy</h2>
-        <button id="btnRenderVideo" class="btn-main" style="background-color: #e67e22;">Stáhnout 360° Video (.webm)</button>
-        <button id="btnRenderPhotos" class="btn-main" style="background-color: #27ae60;">Vygenerovat fotky / náhledy</button>
-        <button id="btnExportSTL" class="btn-main">Stáhnout STL (bez stojánku)</button>
-        <button id="btnExportSCAD" class="btn-sub">Stáhnout .SCAD kód</button>
+        <div>
+            <h2>Export a Náhledy</h2>
+            <div class="btn-container">
+                <button id="btnRenderVideo" class="btn btn-video">Stáhnout 360° Video (.webm)</button>
+                <button id="btnRenderPhotos" class="btn btn-photo">Vygenerovat náhledové fotky</button>
+                <button id="btnExportSTL" class="btn btn-primary">Stáhnout STL model</button>
+                <button id="btnExportSCAD" class="btn btn-secondary">Stáhnout .SCAD kód</button>
+            </div>
+        </div>
     </div>
 
     <!-- Modální okno pro náhledové fotky -->
     <div id="photoModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Vygenerované náhledy</h2>
+                <h2>Vygenerované Náhledy</h2>
                 <button class="close-btn" onclick="closeModal()">Zavřít</button>
             </div>
             <div id="galleryGrid" class="gallery-grid"></div>
@@ -313,35 +389,38 @@
     </div>
 
     <script>
-        // --- 1. INITIAL SCENE ---
+        // --- 1. INITIAL SCENE SETUP ---
         const container = document.getElementById('viewport');
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a1a);
 
         const modelGroup = new THREE.Group();
         scene.add(modelGroup);
 
-        const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, -120, 80);
+        // Zvětšené zorné pole (FOV 50) a upravená výchozí kamera pro zobrazení celého modelu
+        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, -170, 70);
         camera.up.set(0, 0, 1);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setClearColor(0x000000, 0); // Průhledné pozadí pro vyniknutí CSS tečkovaného vzoru
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
+        controls.target.set(0, 0, 25);
 
-        // Osvětlení
-        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
-        dirLight1.position.set(50, -50, 100);
+        // Osvětlení přizpůsobené světlému motivu
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+        dirLight1.position.set(60, -80, 100);
         scene.add(dirLight1);
 
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
-        dirLight2.position.set(-50, 50, -50);
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        dirLight2.position.set(-60, 80, 60);
         scene.add(dirLight2);
 
         // --- 2. MATERIÁLY A LOADERY ---
@@ -357,7 +436,6 @@
 
         const UHEL_RAD = 119.1 * (Math.PI / 180);
 
-        // Parametry pro Text
         const POSUN_NAHORU_TEXT = 0.3;
         const configText = {
             Posun_X: 10.0,
@@ -368,7 +446,6 @@
             Rotace_Z: 0
         };
 
-        // Parametry pro QR Kód
         const POSUN_NAHORU_QR = 14.8; 
         const configQR = {
             Posun_X: 10.0, 
@@ -389,8 +466,7 @@
                     onLoaded(mesh);
                 },
                 undefined,
-                (err) => {
-                    console.warn(`Soubor ${filename} nebyl nalezen na serveru, vytvořím náhradní geometrii.`);
+                () => {
                     let geo = filename.includes('stojanek') 
                         ? new THREE.BoxGeometry(60, 40, 10) 
                         : new THREE.BoxGeometry(80, 5, 80);
@@ -415,7 +491,7 @@
 
         updateCedulkaMesh();
 
-        // --- 4. GENERACE A UPDATE OBSAHU (TEXT / QR) ---
+        // --- 4. GENERACE OBSAHU ---
         fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
             loadedFont = font;
             updateContent();
@@ -493,7 +569,7 @@
             modelGroup.add(meshPrvek);
         }
 
-        // --- 5. INTERAKCE A EVENTY ---
+        // --- 5. EVENTY ---
         document.getElementById('modeSelect').addEventListener('change', (e) => {
             const isText = e.target.value === 'text';
             document.getElementById('sectionText').style.display = isText ? 'block' : 'none';
@@ -519,15 +595,15 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. RENDER 360° WEBM VIDEA ---
+        // --- 6. OPRAVENÝ 360° VIDEO EXPORT (CELEK V ZÁBĚRU) ---
         async function export360Video() {
             const btn = document.getElementById('btnRenderVideo');
             const originalText = btn.innerText;
             btn.disabled = true;
 
-            const totalFrames = 90; // 90 snímků = cca 3 sekundy animace při 30fps
-            const radius = 130;
-            const height = 50;
+            const totalFrames = 90;
+            const radius = 170; // Dostatečný odstup kamery
+            const height = 65;
 
             const videoWriter = new WebMWriter({
                 quality: 0.9,
@@ -537,13 +613,14 @@
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
-            controls.target.set(0, 0, 30);
+            controls.target.set(0, 0, 25);
 
             for (let i = 0; i < totalFrames; i++) {
-                const angle = (i / totalFrames) * Math.PI * 2;
+                // Začínáme od Math.PI pro přímý pohled na přední stranu
+                const angle = Math.PI + (i / totalFrames) * Math.PI * 2;
                 
                 camera.position.x = Math.sin(angle) * radius;
-                camera.position.y = -Math.cos(angle) * radius;
+                camera.position.y = Math.cos(angle) * radius;
                 camera.position.z = height;
 
                 controls.update();
@@ -551,14 +628,11 @@
 
                 videoWriter.addFrame(renderer.domElement);
 
-                // Aktualizace textu tlačítka pro zpětnou vazbu
                 btn.innerText = `Generuji video: ${Math.round(((i + 1) / totalFrames) * 100)}%`;
-                
-                // Krátká pauza pro uvolnění UI vlákna
                 await new Promise(r => setTimeout(r, 10));
             }
 
-            btn.innerText = "Komprimuji video...";
+            btn.innerText = "Komprimuji...";
             const blob = await videoWriter.complete();
 
             const link = document.createElement('a');
@@ -566,7 +640,6 @@
             link.download = 'cedulka_360_prehlidka.webm';
             link.click();
 
-            // Obnovení kamery
             camera.position.copy(origPos);
             controls.target.copy(origTarget);
             controls.update();
@@ -578,16 +651,17 @@
 
         document.getElementById('btnRenderVideo').addEventListener('click', export360Video);
 
-        // --- 7. RENDER NÁHLEDOVÝCH FOTEK Z RŮZNÝCH ÚHLŮ ---
+        // --- 7. OPRAVENÉ NÁHLEDOVÉ FOTKY (PŘEDNÍ STRANA + CELÝ MODEL) ---
         function renderMultipleViews() {
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
+            // Správně nasměrované úhly s dostatečnou vzdáleností
             const views = [
-                { name: "Přední náhled", pos: [0, -120, 45], target: [0, 0, 30] },
-                { name: "Izometrický pohled", pos: [90, -90, 70], target: [0, 0, 30] },
-                { name: "Detail z úhlu", pos: [-60, -80, 50], target: [0, 0, 30] },
-                { name: "Pohled shora", pos: [0, -10, 140], target: [0, 0, 20] }
+                { name: "Přední pohled", pos: [0, -170, 35], target: [0, 0, 25] },
+                { name: "Izometrický pohled", pos: [130, -130, 90], target: [0, 0, 25] },
+                { name: "Boční detail", pos: [-150, -60, 50], target: [0, 0, 25] },
+                { name: "Pohled shora", pos: [0, -20, 180], target: [0, 0, 20] }
             ];
 
             const galleryGrid = document.getElementById('galleryGrid');
@@ -605,8 +679,8 @@
                 item.className = 'gallery-item';
                 item.innerHTML = `
                     <img src="${dataURL}" alt="${view.name}">
-                    <span style="font-size:0.8rem; color:#ccc;">${view.name}</span>
-                    <a href="${dataURL}" download="nahled_${index + 1}.png">Stáhnout náhled</a>
+                    <span style="font-size:0.8rem; font-weight:600; color:#495057;">${view.name}</span>
+                    <a href="${dataURL}" download="nahled_${index + 1}.png">Stáhnout obrázek</a>
                 `;
                 galleryGrid.appendChild(item);
             });
@@ -625,80 +699,55 @@
 
         document.getElementById('btnRenderPhotos').addEventListener('click', renderMultipleViews);
 
-        // --- 8. EXPORT STL SOUBORU ---
+        // --- 8. EXPORT STL ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
-            
             const exportGroup = new THREE.Group();
             if (meshCedulka) exportGroup.add(meshCedulka.clone());
             if (meshPrvek) exportGroup.add(meshPrvek.clone());
 
             const result = exporter.parse(exportGroup, { binary: true });
-
             const blob = new Blob([result], { type: 'application/octet-stream' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = 'cedulka_s_prvkem.stl';
+            link.download = 'cedulka_model.stl';
             link.click();
         });
 
-        // --- 9. EXPORT SCAD SOUBORU ---
+        // --- 9. EXPORT SCAD ---
         document.getElementById('btnExportSCAD').addEventListener('click', () => {
             const mode = document.getElementById('modeSelect').value;
             let scadContent = "";
 
             if (mode === 'text') {
-                const textVal = document.getElementById('textInput').value;
-                const sizeVal = document.getElementById('Velikost_Pisma').value;
-                const heightVal = document.getElementById('Vyska_Pisma').value;
+                scadContent = `/* Nastavení Textu */
+Vlastni_Text = "${document.getElementById('textInput').value}"; 
+Velikost_Pisma = ${document.getElementById('Velikost_Pisma').value}; 
+Vyska_Pisma = ${document.getElementById('Vyska_Pisma').value}; 
 
-                scadContent = `/* [Nastavení Textu] */
-Vlastni_Text = "${textVal}"; 
-Velikost_Pisma = ${sizeVal}; 
-Vyska_Pisma = ${heightVal}; 
-Pismo = "Montserrat:style=Bold"; 
-
-/* [Barevné nastavení pro AMS] */
 Barva_Stojanku = "${document.getElementById('Barva_Stojanku').value}"; 
 Barva_Cedulky = "${document.getElementById('Barva_Cedulky').value}"; 
 Barva_Textu = "${document.getElementById('Barva_Textu').value}"; 
 
-/* --- LOGIKA GENERUJÍCÍ MODEL --- */
-color(Barva_Stojanku) { import("stojanek.stl"); }
-color(Barva_Cedulky) { import("cedulka.stl"); }
+color(Barva_Stojanku) import("stojanek.stl");
+color(Barva_Cedulky) import("cedulka.stl");
 color(Barva_Textu) {
     translate([${configText.Posun_X.toFixed(2)}, ${configText.Posun_Y.toFixed(2)}, ${configText.Posun_Z.toFixed(2)}])
     rotate([119.1, 180, 0])
-    linear_extrude(height = Vyska_Pisma) {
-        text(text = Vlastni_Text, size = Velikost_Pisma, font = Pismo, halign = "center", valign = "center");
-    }
-}
-`;
+    linear_extrude(height = Vyska_Pisma)
+        text(text = Vlastni_Text, size = Velikost_Pisma, halign = "center", valign = "center");
+}`;
             } else {
-                const qrVal = document.getElementById('qrInput').value;
-                const heightVal = document.getElementById('Vyska_QR').value;
+                scadContent = `/* Nastavení QR */
+QR_Text = "${document.getElementById('qrInput').value}"; 
+Vyska_QR = ${document.getElementById('Vyska_QR').value}; 
 
-                scadContent = `/* [Nastavení QR Cedulky] */
-QR_Text = "${qrVal}"; 
-Velikost_QR = 60; // 6x6 cm
-Vyska_QR = ${heightVal}; 
-
-/* [Barevné nastavení pro AMS] */
 Barva_Stojanku = "${document.getElementById('Barva_Stojanku').value}"; 
 Barva_Cedulky = "${document.getElementById('Barva_Cedulky').value}"; 
 Barva_QR = "${document.getElementById('Barva_Textu').value}"; 
 
-/* --- LOGIKA GENERUJÍCÍ MODEL --- */
-color(Barva_Stojanku) { import("stojanek.stl"); }
-color(Barva_Cedulky) { import("qr.stl"); }
-color(Barva_QR) {
-    translate([${configQR.Posun_X.toFixed(2)}, ${configQR.Posun_Y.toFixed(2)}, ${configQR.Posun_Z.toFixed(2)}])
-    rotate([119.1, 180, 0])
-    translate([0, 0, 0]) {
-        // Vygenerovaný QR kód (velikost 60x60mm)
-    }
-}
-`;
+color(Barva_Stojanku) import("stojanek.stl");
+color(Barva_Cedulky) import("qr.stl");`;
             }
 
             const blob = new Blob([scadContent], { type: 'text/plain' });
@@ -708,11 +757,10 @@ color(Barva_QR) {
             link.click();
         });
 
-        // --- 10. RENDER LOOP A SPOLEHLIVÝ RESIZE PRO MOBILY ---
+        // --- 10. RESIZE A ANIMACE ---
         function onWindowResize() {
             const width = container.clientWidth;
             const height = container.clientHeight;
-            
             if (width === 0 || height === 0) return;
 
             camera.aspect = width / height;
@@ -721,10 +769,6 @@ color(Barva_QR) {
         }
 
         window.addEventListener('resize', onWindowResize);
-        window.addEventListener('orientationchange', () => {
-            setTimeout(onWindowResize, 150);
-        });
-
         setTimeout(onWindowResize, 100);
 
         function animate() {
