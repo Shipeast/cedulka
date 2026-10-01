@@ -33,7 +33,7 @@
             background-color: #242424;
             padding: 20px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* Hladké skrolování na iOS */
+            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -46,7 +46,7 @@
             position: relative;
             width: 100%;
             height: 100%;
-            touch-action: none; /* Zamezí skrolování stránky při ovládání 3D scény */
+            touch-action: none;
             overflow: hidden;
         }
         h2 {
@@ -78,7 +78,7 @@
         }
         input[type="range"] {
             width: 100%;
-            height: 30px; /* Zvětšená dotyková plocha */
+            height: 30px;
             cursor: pointer;
         }
         .color-pickers {
@@ -136,10 +136,73 @@
             background-color: #555;
         }
 
+        /* MODÁLNÍ OKNO PRO NÁHLEDY FOTEK */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+            flex-direction: column;
+            align-items: center;
+        }
+        .modal-content {
+            background: #242424;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 900px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .close-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .gallery-item {
+            background: #1a1a1a;
+            border-radius: 6px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+            border: 1px solid #333;
+        }
+        .gallery-item a {
+            color: #00adb5;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
         /* RESPONSIVNÍ DESIGN PRO MOBILY A TABLETY */
         @media (max-width: 800px) {
             body {
-                flex-direction: column-reverse; /* Ovládací panel dole, 3D okno nahoře pro lepší ergonomii */
+                flex-direction: column-reverse;
             }
             #sidebar {
                 width: 100%;
@@ -229,9 +292,21 @@
             </div>
         </div>
 
-        <h2>Export</h2>
+        <h2>Export & Náhledy</h2>
+        <button id="btnRenderPhotos" class="btn-main" style="background-color: #27ae60;"> Vygenerovat fotky / náhledy</button>
         <button id="btnExportSTL" class="btn-main">Stáhnout STL (bez stojánku)</button>
         <button id="btnExportSCAD" class="btn-sub">Stáhnout .SCAD kód</button>
+    </div>
+
+    <!-- Modální okno pro náhledové fotky -->
+    <div id="photoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Vygenerované náhledy</h2>
+                <button class="close-btn" onclick="closeModal()">Zavřít</button>
+            </div>
+            <div id="galleryGrid" class="gallery-grid"></div>
+        </div>
     </div>
 
     <script>
@@ -247,7 +322,8 @@
         camera.position.set(0, -120, 80);
         camera.up.set(0, 0, 1);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        // preserveDrawingBuffer nutný pro převod WebGL plátna na obrázky
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
         container.appendChild(renderer.domElement);
@@ -323,7 +399,6 @@
             );
         }
 
-        // Načtení stojánku
         loadSTL('stojanek.stl', matStojanek, (m) => meshStojanek = m);
 
         function updateCedulkaMesh() {
@@ -442,7 +517,60 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. EXPORT STL SOUBORU ---
+        // --- 6. RENDER NÁHLEDOVÝCH FOTEK Z RŮZNÝCH ÚHLŮ ---
+        function renderMultipleViews() {
+            // Uložení aktuální pozice a cesty kamery
+            const origPos = camera.position.clone();
+            const origTarget = controls.target.clone();
+
+            const views = [
+                { name: "Přední náhled", pos: [0, -120, 45], target: [0, 0, 30] },
+                { name: "Izometrický pohled", pos: [90, -90, 70], target: [0, 0, 30] },
+                { name: "Detail z úhlu", pos: [-60, -80, 50], target: [0, 0, 30] },
+                { name: "Pohled shora", pos: [0, -10, 140], target: [0, 0, 20] }
+            ];
+
+            const galleryGrid = document.getElementById('galleryGrid');
+            galleryGrid.innerHTML = "";
+
+            views.forEach((view, index) => {
+                // Nastavení pozice pro snímek
+                camera.position.set(...view.pos);
+                controls.target.set(...view.target);
+                controls.update();
+                renderer.render(scene, camera);
+
+                // Získání obrázku z WebGL Canvasu
+                const dataURL = renderer.domElement.toDataURL('image/png');
+
+                // Vytvoření prvku do galerie
+                const item = document.createElement('div');
+                item.className = 'gallery-item';
+                item.innerHTML = `
+                    <img src="${dataURL}" alt="${view.name}">
+                    <span style="font-size:0.8rem; color:#ccc;">${view.name}</span>
+                    <a href="${dataURL}" download="nahled_${index + 1}.png">Stáhnout náhled</a>
+                `;
+                galleryGrid.appendChild(item);
+            });
+
+            // Obnovení původní pozice kamery
+            camera.position.copy(origPos);
+            controls.target.copy(origTarget);
+            controls.update();
+            renderer.render(scene, camera);
+
+            // Zobrazení modálního okna
+            document.getElementById('photoModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('photoModal').style.display = 'none';
+        }
+
+        document.getElementById('btnRenderPhotos').addEventListener('click', renderMultipleViews);
+
+        // --- 7. EXPORT STL SOUBORU ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
             
@@ -459,7 +587,7 @@
             link.click();
         });
 
-        // --- 7. EXPORT SCAD SOUBORU ---
+        // --- 8. EXPORT SCAD SOUBORU ---
         document.getElementById('btnExportSCAD').addEventListener('click', () => {
             const mode = document.getElementById('modeSelect').value;
             let scadContent = "";
@@ -525,7 +653,7 @@ color(Barva_QR) {
             link.click();
         });
 
-        // --- 8. RENDER LOOP A SPOLEHLIVÝ RESIZE PRO MOBILY ---
+        // --- 9. RENDER LOOP A SPOLEHLIVÝ RESIZE PRO MOBILY ---
         function onWindowResize() {
             const width = container.clientWidth;
             const height = container.clientHeight;
@@ -542,7 +670,6 @@ color(Barva_QR) {
             setTimeout(onWindowResize, 150);
         });
 
-        // Prvotní zjištění velikosti po načtení
         setTimeout(onWindowResize, 100);
 
         function animate() {
