@@ -52,13 +52,15 @@
             height: 100%;
             touch-action: none;
             overflow: hidden;
-            background-color: #f4f5f7;
-            /* Vzor tečkovaného sešitu s křížkem každý 4. bod */
+            background-color: #d8dcd6;
+            /* Obrácený maskovací vzor v neutrálních šedých a béžových tónech pro vysoký kontrast světlých i tmavých barev */
             background-image: 
-                radial-gradient(#adb5bd 1.5px, transparent 1.5px),
-                url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M117 120h6v-6h-6v6zm0-120h6v6h-6V0zM0 117h6v6H0v-6zM0 0h6v6H0V0z' fill='%208c98a4' fill-opacity='0.4'/%3E%3C/svg%3E");
-            background-size: 30px 30px, 120px 120px;
-            background-position: 0 0, 0 0;
+                radial-gradient(circle at 20% 20%, #b8beb5 0%, #b8beb5 25%, transparent 26%),
+                radial-gradient(circle at 80% 30%, #a4aaa0 0%, #a4aaa0 20%, transparent 21%),
+                radial-gradient(circle at 40% 70%, #c4c8c1 0%, #c4c8c1 30%, transparent 31%),
+                radial-gradient(circle at 85% 80%, #90968c 0%, #90968c 22%, transparent 23%),
+                radial-gradient(circle at 10% 85%, #a4aaa0 0%, #a4aaa0 18%, transparent 19%);
+            background-size: 240px 240px;
         }
 
         h2 {
@@ -135,7 +137,7 @@
             border-radius: 50%;
             cursor: pointer;
             background: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         input[type="color"]::-webkit-color-swatch-wrapper {
             padding: 0;
@@ -176,15 +178,6 @@
         }
         .btn-primary:hover {
             background-color: #00939a;
-        }
-
-        .btn-video {
-            background-color: #ff9f43;
-            color: white;
-            box-shadow: 0 4px 12px rgba(255, 159, 67, 0.25);
-        }
-        .btn-video:hover {
-            background-color: #ee872b;
         }
 
         .btn-photo {
@@ -263,7 +256,12 @@
             width: 100%;
             height: auto;
             border-radius: 6px;
-            background: #f4f5f7;
+            background-color: #d8dcd6;
+            background-image: 
+                radial-gradient(circle at 20% 20%, #b8beb5 0%, #b8beb5 25%, transparent 26%),
+                radial-gradient(circle at 80% 30%, #a4aaa0 0%, #a4aaa0 20%, transparent 21%),
+                radial-gradient(circle at 40% 70%, #c4c8c1 0%, #c4c8c1 30%, transparent 31%);
+            background-size: 120px 120px;
         }
         .gallery-item a {
             color: #00adb5;
@@ -300,8 +298,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
     <!-- QR Code Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <!-- WebM Writer pro export 360 videa -->
-    <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.2.0/webm-writer.js"></script>
 </head>
 <body>
 
@@ -357,11 +353,11 @@
                 </div>
                 <div class="color-unit">
                     <label>Cedulka</label>
-                    <input type="color" id="Barva_Cedulky" value="#ff0000">
+                    <input type="color" id="Barva_Cedulky" value="#ffffff">
                 </div>
                 <div class="color-unit">
                     <label id="lblBarvaPrvku">QR Kód</label>
-                    <input type="color" id="Barva_Textu" value="#ffffff">
+                    <input type="color" id="Barva_Textu" value="#000000">
                 </div>
             </div>
         </div>
@@ -369,7 +365,6 @@
         <div>
             <h2>Export a Náhledy</h2>
             <div class="btn-container">
-                <button id="btnRenderVideo" class="btn btn-video">Stáhnout 360° Video (.webm)</button>
                 <button id="btnRenderPhotos" class="btn btn-photo">Vygenerovat náhledové fotky</button>
                 <button id="btnExportSTL" class="btn btn-primary">Stáhnout STL model</button>
                 <button id="btnExportSCAD" class="btn btn-secondary">Stáhnout .SCAD kód</button>
@@ -396,15 +391,15 @@
         const modelGroup = new THREE.Group();
         scene.add(modelGroup);
 
-        // Zvětšené zorné pole (FOV 50) a upravená výchozí kamera pro zobrazení celého modelu
         const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, -170, 70);
+        // Výchozí pozice kamery před cedulkou
+        camera.position.set(0, 170, 70);
         camera.up.set(0, 0, 1);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setClearColor(0x000000, 0); // Průhledné pozadí pro vyniknutí CSS tečkovaného vzoru
+        renderer.setClearColor(0x000000, 0); // Průhledné plátno
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -412,15 +407,15 @@
         controls.dampingFactor = 0.05;
         controls.target.set(0, 0, 25);
 
-        // Osvětlení přizpůsobené světlému motivu
+        // Osvětlení
         scene.add(new THREE.AmbientLight(0xffffff, 0.7));
         
         const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
-        dirLight1.position.set(60, -80, 100);
+        dirLight1.position.set(60, 80, 100);
         scene.add(dirLight1);
 
         const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-        dirLight2.position.set(-60, 80, 60);
+        dirLight2.position.set(-60, -80, 60);
         scene.add(dirLight2);
 
         // --- 2. MATERIÁLY A LOADERY ---
@@ -428,8 +423,8 @@
         const fontLoader = new THREE.FontLoader();
 
         const matStojanek = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.5 });
-        const matCedulka = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5 });
-        const matPrvek = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+        const matCedulka = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+        const matPrvek = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.3 });
 
         let meshStojanek, meshCedulka, meshPrvek;
         let loadedFont = null;
@@ -595,73 +590,17 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. OPRAVENÝ 360° VIDEO EXPORT (CELEK V ZÁBĚRU) ---
-        async function export360Video() {
-            const btn = document.getElementById('btnRenderVideo');
-            const originalText = btn.innerText;
-            btn.disabled = true;
-
-            const totalFrames = 90;
-            const radius = 170; // Dostatečný odstup kamery
-            const height = 65;
-
-            const videoWriter = new WebMWriter({
-                quality: 0.9,
-                frameRate: 30
-            });
-
-            const origPos = camera.position.clone();
-            const origTarget = controls.target.clone();
-
-            controls.target.set(0, 0, 25);
-
-            for (let i = 0; i < totalFrames; i++) {
-                // Začínáme od Math.PI pro přímý pohled na přední stranu
-                const angle = Math.PI + (i / totalFrames) * Math.PI * 2;
-                
-                camera.position.x = Math.sin(angle) * radius;
-                camera.position.y = Math.cos(angle) * radius;
-                camera.position.z = height;
-
-                controls.update();
-                renderer.render(scene, camera);
-
-                videoWriter.addFrame(renderer.domElement);
-
-                btn.innerText = `Generuji video: ${Math.round(((i + 1) / totalFrames) * 100)}%`;
-                await new Promise(r => setTimeout(r, 10));
-            }
-
-            btn.innerText = "Komprimuji...";
-            const blob = await videoWriter.complete();
-
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'cedulka_360_prehlidka.webm';
-            link.click();
-
-            camera.position.copy(origPos);
-            controls.target.copy(origTarget);
-            controls.update();
-            renderer.render(scene, camera);
-
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-
-        document.getElementById('btnRenderVideo').addEventListener('click', export360Video);
-
-        // --- 7. OPRAVENÉ NÁHLEDOVÉ FOTKY (PŘEDNÍ STRANA + CELÝ MODEL) ---
+        // --- 6. OPRAVENÉ NÁHLEDOVÉ FOTKY (PŘEDNÍ STRANA SPRÁVNĚ OTOČENÁ) ---
         function renderMultipleViews() {
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
-            // Správně nasměrované úhly s dostatečnou vzdáleností
+            // Správné úhly namířené zepředu na text/QR kód
             const views = [
-                { name: "Přední pohled", pos: [0, -170, 35], target: [0, 0, 25] },
-                { name: "Izometrický pohled", pos: [130, -130, 90], target: [0, 0, 25] },
-                { name: "Boční detail", pos: [-150, -60, 50], target: [0, 0, 25] },
-                { name: "Pohled shora", pos: [0, -20, 180], target: [0, 0, 20] }
+                { name: "Přední pohled", pos: [0, 170, 35], target: [0, 0, 25] },
+                { name: "Izometrický pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
+                { name: "Boční detail", pos: [150, 60, 50], target: [0, 0, 25] },
+                { name: "Pohled shora", pos: [0, 20, 180], target: [0, 0, 20] }
             ];
 
             const galleryGrid = document.getElementById('galleryGrid');
@@ -699,7 +638,7 @@
 
         document.getElementById('btnRenderPhotos').addEventListener('click', renderMultipleViews);
 
-        // --- 8. EXPORT STL ---
+        // --- 7. EXPORT STL ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
             const exportGroup = new THREE.Group();
@@ -714,7 +653,7 @@
             link.click();
         });
 
-        // --- 9. EXPORT SCAD ---
+        // --- 8. EXPORT SCAD ---
         document.getElementById('btnExportSCAD').addEventListener('click', () => {
             const mode = document.getElementById('modeSelect').value;
             let scadContent = "";
@@ -757,7 +696,7 @@ color(Barva_Cedulky) import("qr.stl");`;
             link.click();
         });
 
-        // --- 10. RESIZE A ANIMACE ---
+        // --- 9. RESIZE A ANIMACE ---
         function onWindowResize() {
             const width = container.clientWidth;
             const height = container.clientHeight;
