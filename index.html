@@ -231,6 +231,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js"></script>
     <!-- JS QR Code Generator Library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <!-- WebM Writer pro export 360 videa -->
+    <script src="https://cdn.jsdelivr.net/npm/webm-writer@0.2.0/webm-writer.js"></script>
 </head>
 <body>
 
@@ -293,7 +295,8 @@
         </div>
 
         <h2>Export & Náhledy</h2>
-        <button id="btnRenderPhotos" class="btn-main" style="background-color: #27ae60;"> Vygenerovat fotky / náhledy</button>
+        <button id="btnRenderVideo" class="btn-main" style="background-color: #e67e22;">Stáhnout 360° Video (.webm)</button>
+        <button id="btnRenderPhotos" class="btn-main" style="background-color: #27ae60;">Vygenerovat fotky / náhledy</button>
         <button id="btnExportSTL" class="btn-main">Stáhnout STL (bez stojánku)</button>
         <button id="btnExportSCAD" class="btn-sub">Stáhnout .SCAD kód</button>
     </div>
@@ -322,7 +325,6 @@
         camera.position.set(0, -120, 80);
         camera.up.set(0, 0, 1);
 
-        // preserveDrawingBuffer nutný pro převod WebGL plátna na obrázky
         const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance", preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
@@ -517,9 +519,67 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. RENDER NÁHLEDOVÝCH FOTEK Z RŮZNÝCH ÚHLŮ ---
+        // --- 6. RENDER 360° WEBM VIDEA ---
+        async function export360Video() {
+            const btn = document.getElementById('btnRenderVideo');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+
+            const totalFrames = 90; // 90 snímků = cca 3 sekundy animace při 30fps
+            const radius = 130;
+            const height = 50;
+
+            const videoWriter = new WebMWriter({
+                quality: 0.9,
+                frameRate: 30
+            });
+
+            const origPos = camera.position.clone();
+            const origTarget = controls.target.clone();
+
+            controls.target.set(0, 0, 30);
+
+            for (let i = 0; i < totalFrames; i++) {
+                const angle = (i / totalFrames) * Math.PI * 2;
+                
+                camera.position.x = Math.sin(angle) * radius;
+                camera.position.y = -Math.cos(angle) * radius;
+                camera.position.z = height;
+
+                controls.update();
+                renderer.render(scene, camera);
+
+                videoWriter.addFrame(renderer.domElement);
+
+                // Aktualizace textu tlačítka pro zpětnou vazbu
+                btn.innerText = `Generuji video: ${Math.round(((i + 1) / totalFrames) * 100)}%`;
+                
+                // Krátká pauza pro uvolnění UI vlákna
+                await new Promise(r => setTimeout(r, 10));
+            }
+
+            btn.innerText = "Komprimuji video...";
+            const blob = await videoWriter.complete();
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'cedulka_360_prehlidka.webm';
+            link.click();
+
+            // Obnovení kamery
+            camera.position.copy(origPos);
+            controls.target.copy(origTarget);
+            controls.update();
+            renderer.render(scene, camera);
+
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+
+        document.getElementById('btnRenderVideo').addEventListener('click', export360Video);
+
+        // --- 7. RENDER NÁHLEDOVÝCH FOTEK Z RŮZNÝCH ÚHLŮ ---
         function renderMultipleViews() {
-            // Uložení aktuální pozice a cesty kamery
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
 
@@ -534,16 +594,13 @@
             galleryGrid.innerHTML = "";
 
             views.forEach((view, index) => {
-                // Nastavení pozice pro snímek
                 camera.position.set(...view.pos);
                 controls.target.set(...view.target);
                 controls.update();
                 renderer.render(scene, camera);
 
-                // Získání obrázku z WebGL Canvasu
                 const dataURL = renderer.domElement.toDataURL('image/png');
 
-                // Vytvoření prvku do galerie
                 const item = document.createElement('div');
                 item.className = 'gallery-item';
                 item.innerHTML = `
@@ -554,13 +611,11 @@
                 galleryGrid.appendChild(item);
             });
 
-            // Obnovení původní pozice kamery
             camera.position.copy(origPos);
             controls.target.copy(origTarget);
             controls.update();
             renderer.render(scene, camera);
 
-            // Zobrazení modálního okna
             document.getElementById('photoModal').style.display = 'flex';
         }
 
@@ -570,7 +625,7 @@
 
         document.getElementById('btnRenderPhotos').addEventListener('click', renderMultipleViews);
 
-        // --- 7. EXPORT STL SOUBORU ---
+        // --- 8. EXPORT STL SOUBORU ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
             
@@ -587,7 +642,7 @@
             link.click();
         });
 
-        // --- 8. EXPORT SCAD SOUBORU ---
+        // --- 9. EXPORT SCAD SOUBORU ---
         document.getElementById('btnExportSCAD').addEventListener('click', () => {
             const mode = document.getElementById('modeSelect').value;
             let scadContent = "";
@@ -653,7 +708,7 @@ color(Barva_QR) {
             link.click();
         });
 
-        // --- 9. RENDER LOOP A SPOLEHLIVÝ RESIZE PRO MOBILY ---
+        // --- 10. RENDER LOOP A SPOLEHLIVÝ RESIZE PRO MOBILY ---
         function onWindowResize() {
             const width = container.clientWidth;
             const height = container.clientHeight;
