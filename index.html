@@ -166,6 +166,15 @@
             transform: scale(0.98);
         }
 
+        .btn-share {
+            background-color: #6c5ce7;
+            color: white;
+            box-shadow: 0 4px 12px rgba(108, 92, 231, 0.25);
+        }
+        .btn-share:hover {
+            background-color: #5b4cc4;
+        }
+
         .btn-primary {
             background-color: #00adb5;
             color: white;
@@ -288,8 +297,9 @@
         </div>
 
         <div>
-            <h2>Export a Náhledy</h2>
+            <h2>Sdílení a Export</h2>
             <div class="btn-container">
+                <button id="btnShareLink" class="btn btn-share">Zkopírovat odkaz na design</button>
                 <button id="btnRenderPhotos" class="btn btn-photo">Stáhnout fotky v ZIP</button>
                 <button id="btnExportSTL" class="btn btn-primary">Stáhnout STL model</button>
                 <button id="btnExportSCAD" class="btn btn-secondary">Stáhnout .SCAD kód</button>
@@ -312,7 +322,7 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.setClearColor(0x000000, 0); // Průhledné plátno pro render
+        renderer.setClearColor(0x000000, 0);
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -331,7 +341,7 @@
         dirLight2.position.set(-60, -80, 60);
         scene.add(dirLight2);
 
-        // --- PRELOAD VODOZNAKOVÉHO POZADÍ PRO EXPORT ---
+        // PRELOAD POZADÍ PRO EXPORT
         const bgSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'><text x='120' y='80' fill='%238e9398' font-family='sans-serif' font-weight='bold' font-size='20' text-anchor='middle' dominant-baseline='middle' transform='rotate(-20 120 80)' opacity='0.5'>shipeast.xyz</text></svg>`;
         const bgPatternImage = new Image();
         bgPatternImage.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(bgSvg);
@@ -402,9 +412,72 @@
             loadSTL(filename, matCedulka, (m) => meshCedulka = m);
         }
 
+        // --- 4. LOGIKA PRO SDÍLENÍ A NAČÍTÁNÍ Z URL ---
+        function applyStateFromURL() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return;
+
+            const params = new URLSearchParams(hash);
+            
+            if (params.has('mode')) document.getElementById('modeSelect').value = params.get('mode');
+            if (params.has('text')) document.getElementById('textInput').value = params.get('text');
+            if (params.has('qr')) document.getElementById('qrInput').value = params.get('qr');
+            
+            if (params.has('textSize')) {
+                document.getElementById('Velikost_Pisma').value = params.get('textSize');
+                document.getElementById('val_Velikost_Pisma').innerText = params.get('textSize');
+            }
+            if (params.has('textHeight')) {
+                document.getElementById('Vyska_Pisma').value = params.get('textHeight');
+                document.getElementById('val_Vyska_Pisma').innerText = params.get('textHeight');
+            }
+            if (params.has('qrHeight')) {
+                document.getElementById('Vyska_QR').value = params.get('qrHeight');
+                document.getElementById('val_Vyska_QR').innerText = params.get('qrHeight');
+            }
+
+            if (params.has('cStand')) {
+                document.getElementById('Barva_Stojanku').value = params.get('cStand');
+                matStojanek.color.set(params.get('cStand'));
+            }
+            if (params.has('cPlate')) {
+                document.getElementById('Barva_Cedulky').value = params.get('cPlate');
+                matCedulka.color.set(params.get('cPlate'));
+            }
+            if (params.has('cElem')) {
+                document.getElementById('Barva_Textu').value = params.get('cElem');
+                matPrvek.color.set(params.get('cElem'));
+            }
+
+            // Aktualizace viditelnosti sekcí podle režimu
+            const isText = document.getElementById('modeSelect').value === 'text';
+            document.getElementById('sectionText').style.display = isText ? 'block' : 'none';
+            document.getElementById('sectionQR').style.display = isText ? 'none' : 'block';
+            document.getElementById('lblBarvaPrvku').innerText = isText ? 'Text' : 'QR Kód';
+        }
+
+        function generateShareURL() {
+            const params = new URLSearchParams();
+            const mode = document.getElementById('modeSelect').value;
+            
+            params.set('mode', mode);
+            params.set('text', document.getElementById('textInput').value);
+            params.set('qr', document.getElementById('qrInput').value);
+            params.set('textSize', document.getElementById('Velikost_Pisma').value);
+            params.set('textHeight', document.getElementById('Vyska_Pisma').value);
+            params.set('qrHeight', document.getElementById('Vyska_QR').value);
+            params.set('cStand', document.getElementById('Barva_Stojanku').value);
+            params.set('cPlate', document.getElementById('Barva_Cedulky').value);
+            params.set('cElem', document.getElementById('Barva_Textu').value);
+
+            return window.location.origin + window.location.pathname + '#' + params.toString();
+        }
+
+        // Načtení parametrů z URL při startu
+        applyStateFromURL();
         updateCedulkaMesh();
 
-        // --- 4. GENERACE OBSAHU ---
+        // --- 5. GENERACE OBSAHU ---
         fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
             loadedFont = font;
             updateContent();
@@ -482,7 +555,7 @@
             modelGroup.add(meshPrvek);
         }
 
-        // --- 5. EVENTY ---
+        // --- 6. EVENTY ---
         document.getElementById('modeSelect').addEventListener('change', (e) => {
             const isText = e.target.value === 'text';
             document.getElementById('sectionText').style.display = isText ? 'block' : 'none';
@@ -508,7 +581,20 @@
         document.getElementById('Barva_Cedulky').addEventListener('input', (e) => matCedulka.color.set(e.target.value));
         document.getElementById('Barva_Textu').addEventListener('input', (e) => matPrvek.color.set(e.target.value));
 
-        // --- 6. EXPORT FOTEK SE SHODNÝM POZADÍM DO ZIP ---
+        // Tlačítko pro zkopírování odkazu
+        document.getElementById('btnShareLink').addEventListener('click', () => {
+            const url = generateShareURL();
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.getElementById('btnShareLink');
+                const origText = btn.innerText;
+                btn.innerText = "✓ Odkaz zkopírován!";
+                setTimeout(() => { btn.innerText = origText; }, 2000);
+            }).catch(() => {
+                prompt("Zkopírujte si tento odkaz:", url);
+            });
+        });
+
+        // --- 7. EXPORT FOTEK DO ZIP ---
         async function renderAndExportZip() {
             const origPos = camera.position.clone();
             const origTarget = controls.target.clone();
@@ -541,33 +627,27 @@
                 controls.update();
                 renderer.render(scene, camera);
 
-                // 1. Vykreslení základního šedého pozadí
                 ctx.fillStyle = "#b0b4b8";
                 ctx.fillRect(0, 0, width, height);
 
-                // 2. Vykreslení opakovaného vodoznakového vzoru na POZADÍ
                 if (bgPatternImage.complete) {
                     const pattern = ctx.createPattern(bgPatternImage, 'repeat');
                     ctx.fillStyle = pattern;
                     ctx.fillRect(0, 0, width, height);
                 }
 
-                // 3. Vykreslení 3D modelu PŘES pozadí
                 ctx.drawImage(renderer.domElement, 0, 0);
 
-                // Převod plátna na base64 a uložení do ZIP
                 const dataUrl = tempCanvas.toDataURL('image/png');
                 const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
                 zip.file(`${i + 1}_${view.name}.png`, base64Data, { base64: true });
             }
 
-            // Obnovení původního pohledu kamery
             camera.position.copy(origPos);
             controls.target.copy(origTarget);
             controls.update();
             renderer.render(scene, camera);
 
-            // Generování a stažení ZIP
             const content = await zip.generateAsync({ type: "blob" });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(content);
@@ -580,7 +660,7 @@
 
         document.getElementById('btnRenderPhotos').addEventListener('click', renderAndExportZip);
 
-        // --- 7. EXPORT STL ---
+        // --- 8. EXPORT STL ---
         document.getElementById('btnExportSTL').addEventListener('click', () => {
             const exporter = new THREE.STLExporter();
             const exportGroup = new THREE.Group();
@@ -595,7 +675,7 @@
             link.click();
         });
 
-        // --- 8. EXPORT SCAD ---
+        // --- 9. EXPORT SCAD ---
         document.getElementById('btnExportSCAD').addEventListener('click', () => {
             const mode = document.getElementById('modeSelect').value;
             let scadContent = "";
@@ -638,7 +718,7 @@ color(Barva_Cedulky) import("qr.stl");`;
             link.click();
         });
 
-        // --- 9. RESIZE A ANIMACE ---
+        // --- 10. RESIZE A ANIMACE ---
         function onWindowResize() {
             const width = container.clientWidth;
             const height = container.clientHeight;
