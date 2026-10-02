@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Konfigurátor Cedulky</title>
+    <title>3D Konfigurátor Cedulky | shipeast.xyz</title>
     <!-- Google Font Montserrat -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         * {
@@ -20,7 +20,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #f8f9fa;
+            background-color: #0f172a;
             color: #212529;
             font-family: 'Montserrat', sans-serif;
         }
@@ -29,7 +29,79 @@
             flex-direction: row;
         }
 
-        /* SIDEBAR LIGHT THEME */
+        /* --- STYLY PRO HUSTÝ LOADER OVERLAY --- */
+        #app-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s;
+        }
+
+        #app-loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-brand {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            position: relative;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: pulseGlow 2s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.2));
+                transform: scale(0.98);
+            }
+            100% {
+                filter: drop-shadow(0 0 25px rgba(79, 172, 254, 0.8));
+                transform: scale(1.02);
+            }
+        }
+
+        .spinner-ring {
+            width: 64px;
+            height: 64px;
+            border: 4px solid rgba(255, 255, 255, 0.08);
+            border-top: 4px solid #00f2fe;
+            border-right: 4px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-status {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* --- SIDEBAR A VIEWPORT --- */
         #sidebar {
             width: 360px;
             background-color: #ffffff;
@@ -55,6 +127,12 @@
             background-color: #b0b4b8;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'%3E%3Ctext x='120' y='80' fill='%238e9398' font-family='sans-serif' font-weight='bold' font-size='20' text-anchor='middle' dominant-baseline='middle' transform='rotate(-20 120 80)' opacity='0.5'%3Eshipeast.xyz%3C/text%3E%3C/svg%3E");
             background-size: 240px 160px;
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+
+        #viewport.loaded {
+            opacity: 1;
         }
 
         h2 {
@@ -233,6 +311,13 @@
 </head>
 <body>
 
+    <!-- LOADER ANIMACE OVERLAY -->
+    <div id="app-loader">
+        <div class="loader-brand">shipeast.xyz</div>
+        <div class="spinner-ring"></div>
+        <div class="loader-status" id="loaderStatus">Načítám 3D konfigurátor...</div>
+    </div>
+
     <div id="viewport"></div>
 
     <div id="sidebar">
@@ -306,6 +391,21 @@
     </div>
 
     <script>
+        // --- POMOCNÉ FUNKCE PRO LOADER ANIMACI ---
+        const loaderOverlay = document.getElementById('app-loader');
+        const loaderStatus = document.getElementById('loaderStatus');
+        const viewportContainer = document.getElementById('viewport');
+
+        function showLoader(text = "Načítám...") {
+            loaderStatus.innerText = text;
+            loaderOverlay.classList.remove('hidden');
+        }
+
+        function hideLoader() {
+            loaderOverlay.classList.add('hidden');
+            viewportContainer.classList.add('loaded');
+        }
+
         // --- 1. INITIAL SCENE SETUP ---
         const container = document.getElementById('viewport');
         const scene = new THREE.Scene();
@@ -413,7 +513,6 @@
         // --- 4. ENKÓDOVÁNÍ A DEKÓDOVÁNÍ URL (BASE64) ---
         function encodeStateToBase64(stateObj) {
             const jsonString = JSON.stringify(stateObj);
-            // encodeURIComponent zajistí správné zpracování české diakritiky
             return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
                 return String.fromCharCode('0x' + p1);
             }));
@@ -491,7 +590,7 @@
             document.getElementById('lblBarvaPrvku').innerText = isText ? 'Text' : 'QR Kód';
         }
 
-        // Načtení z zakódované URL
+        // Načtení ze zakódované URL
         applyStateFromURL();
         updateCedulkaMesh();
 
@@ -499,6 +598,8 @@
         fontLoader.load('https://threejs.org/examples/fonts/helvetiker_bold.typeface.json', (font) => {
             loadedFont = font;
             updateContent();
+            // Skrytí loaderu po načtení fontu a přípravě scény
+            setTimeout(hideLoader, 600);
         });
 
         function createQRMesh(text, targetSizeMm = 60, height = 3, material) {
@@ -612,68 +713,67 @@
             });
         });
 
-        // --- 7. EXPORT FOTEK DO ZIP ---
+        // --- 7. EXPORT FOTEK DO ZIP S ANIMACÍ ---
         async function renderAndExportZip() {
-            const origPos = camera.position.clone();
-            const origTarget = controls.target.clone();
+            showLoader("Generuji náhledové fotky...");
 
-            const views = [
-                { name: "predni_pohled", pos: [0, 170, 35], target: [0, 0, 25] },
-                { name: "kolmy_pohled", pos: [0, 128.8, 115.6], target: [0, -11, 38] },
-                { name: "izometricky_pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
-                { name: "bocni_detail", pos: [150, 60, 50], target: [0, 0, 25] },
-                { name: "pohled_shora", pos: [0, 20, 180], target: [0, 0, 20] }
-            ];
+            setTimeout(async () => {
+                const origPos = camera.position.clone();
+                const origTarget = controls.target.clone();
 
-            const zip = new JSZip();
-            const btn = document.getElementById('btnRenderPhotos');
-            const originalText = btn.innerText;
-            btn.innerText = "Generuji ZIP...";
-            btn.disabled = true;
+                const views = [
+                    { name: "predni_pohled", pos: [0, 170, 35], target: [0, 0, 25] },
+                    { name: "kolmy_pohled", pos: [0, 128.8, 115.6], target: [0, -11, 38] },
+                    { name: "izometricky_pohled", pos: [-130, 130, 90], target: [0, 0, 25] },
+                    { name: "bocni_detail", pos: [150, 60, 50], target: [0, 0, 25] },
+                    { name: "pohled_shora", pos: [0, 20, 180], target: [0, 0, 20] }
+                ];
 
-            const tempCanvas = document.createElement('canvas');
-            const width = renderer.domElement.width;
-            const height = renderer.domElement.height;
-            tempCanvas.width = width;
-            tempCanvas.height = height;
-            const ctx = tempCanvas.getContext('2d');
+                const zip = new JSZip();
 
-            for (let i = 0; i < views.length; i++) {
-                const view = views[i];
-                camera.position.set(...view.pos);
-                controls.target.set(...view.target);
+                const tempCanvas = document.createElement('canvas');
+                const width = renderer.domElement.width;
+                const height = renderer.domElement.height;
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const ctx = tempCanvas.getContext('2d');
+
+                for (let i = 0; i < views.length; i++) {
+                    const view = views[i];
+                    camera.position.set(...view.pos);
+                    controls.target.set(...view.target);
+                    controls.update();
+                    renderer.render(scene, camera);
+
+                    ctx.fillStyle = "#b0b4b8";
+                    ctx.fillRect(0, 0, width, height);
+
+                    if (bgPatternImage.complete) {
+                        const pattern = ctx.createPattern(bgPatternImage, 'repeat');
+                        ctx.fillStyle = pattern;
+                        ctx.fillRect(0, 0, width, height);
+                    }
+
+                    ctx.drawImage(renderer.domElement, 0, 0);
+
+                    const dataUrl = tempCanvas.toDataURL('image/png');
+                    const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+                    zip.file(`${i + 1}_${view.name}.png`, base64Data, { base64: true });
+                }
+
+                camera.position.copy(origPos);
+                controls.target.copy(origTarget);
                 controls.update();
                 renderer.render(scene, camera);
 
-                ctx.fillStyle = "#b0b4b8";
-                ctx.fillRect(0, 0, width, height);
+                const content = await zip.generateAsync({ type: "blob" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'nahledy_shipeast.zip';
+                link.click();
 
-                if (bgPatternImage.complete) {
-                    const pattern = ctx.createPattern(bgPatternImage, 'repeat');
-                    ctx.fillStyle = pattern;
-                    ctx.fillRect(0, 0, width, height);
-                }
-
-                ctx.drawImage(renderer.domElement, 0, 0);
-
-                const dataUrl = tempCanvas.toDataURL('image/png');
-                const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
-                zip.file(`${i + 1}_${view.name}.png`, base64Data, { base64: true });
-            }
-
-            camera.position.copy(origPos);
-            controls.target.copy(origTarget);
-            controls.update();
-            renderer.render(scene, camera);
-
-            const content = await zip.generateAsync({ type: "blob" });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(content);
-            link.download = 'nahledy_cedulka.zip';
-            link.click();
-
-            btn.innerText = originalText;
-            btn.disabled = false;
+                hideLoader();
+            }, 100);
         }
 
         document.getElementById('btnRenderPhotos').addEventListener('click', renderAndExportZip);
