@@ -53,7 +53,6 @@
             touch-action: none;
             overflow: hidden;
             background-color: #b0b4b8;
-            /* Neutrální pozadí s opakovaným vodoznakem shipeast.xyz */
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'%3E%3Ctext x='120' y='80' fill='%238e9398' font-family='sans-serif' font-weight='bold' font-size='20' text-anchor='middle' dominant-baseline='middle' transform='rotate(-20 120 80)' opacity='0.5'%3Eshipeast.xyz%3C/text%3E%3C/svg%3E");
             background-size: 240px 160px;
         }
@@ -202,7 +201,6 @@
             background-color: #e9ecef;
         }
 
-        /* RESPONSIVNÍ DESIGN */
         @media (max-width: 800px) {
             body {
                 flex-direction: column-reverse;
@@ -412,68 +410,88 @@
             loadSTL(filename, matCedulka, (m) => meshCedulka = m);
         }
 
-        // --- 4. LOGIKA PRO SDÍLENÍ A NAČÍTÁNÍ Z URL ---
+        // --- 4. ENKÓDOVÁNÍ A DEKÓDOVÁNÍ URL (BASE64) ---
+        function encodeStateToBase64(stateObj) {
+            const jsonString = JSON.stringify(stateObj);
+            // encodeURIComponent zajistí správné zpracování české diakritiky
+            return btoa(encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+
+        function decodeBase64ToState(base64Str) {
+            try {
+                const jsonString = decodeURIComponent(atob(base64Str).split('').map((c) => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonString);
+            } catch (e) {
+                console.error("Neplatný formát dat v URL", e);
+                return null;
+            }
+        }
+
+        function generateShareURL() {
+            const state = {
+                m: document.getElementById('modeSelect').value,
+                t: document.getElementById('textInput').value,
+                q: document.getElementById('qrInput').value,
+                ts: document.getElementById('Velikost_Pisma').value,
+                th: document.getElementById('Vyska_Pisma').value,
+                qh: document.getElementById('Vyska_QR').value,
+                cs: document.getElementById('Barva_Stojanku').value,
+                cp: document.getElementById('Barva_Cedulky').value,
+                ce: document.getElementById('Barva_Textu').value
+            };
+
+            const encoded = encodeStateToBase64(state);
+            return window.location.origin + window.location.pathname + '#' + encoded;
+        }
+
         function applyStateFromURL() {
             const hash = window.location.hash.substring(1);
             if (!hash) return;
 
-            const params = new URLSearchParams(hash);
+            const state = decodeBase64ToState(hash);
+            if (!state) return;
+
+            if (state.m) document.getElementById('modeSelect').value = state.m;
+            if (state.t !== undefined) document.getElementById('textInput').value = state.t;
+            if (state.q !== undefined) document.getElementById('qrInput').value = state.q;
             
-            if (params.has('mode')) document.getElementById('modeSelect').value = params.get('mode');
-            if (params.has('text')) document.getElementById('textInput').value = params.get('text');
-            if (params.has('qr')) document.getElementById('qrInput').value = params.get('qr');
-            
-            if (params.has('textSize')) {
-                document.getElementById('Velikost_Pisma').value = params.get('textSize');
-                document.getElementById('val_Velikost_Pisma').innerText = params.get('textSize');
+            if (state.ts) {
+                document.getElementById('Velikost_Pisma').value = state.ts;
+                document.getElementById('val_Velikost_Pisma').innerText = state.ts;
             }
-            if (params.has('textHeight')) {
-                document.getElementById('Vyska_Pisma').value = params.get('textHeight');
-                document.getElementById('val_Vyska_Pisma').innerText = params.get('textHeight');
+            if (state.th) {
+                document.getElementById('Vyska_Pisma').value = state.th;
+                document.getElementById('val_Vyska_Pisma').innerText = state.th;
             }
-            if (params.has('qrHeight')) {
-                document.getElementById('Vyska_QR').value = params.get('qrHeight');
-                document.getElementById('val_Vyska_QR').innerText = params.get('qrHeight');
+            if (state.qh) {
+                document.getElementById('Vyska_QR').value = state.qh;
+                document.getElementById('val_Vyska_QR').innerText = state.qh;
             }
 
-            if (params.has('cStand')) {
-                document.getElementById('Barva_Stojanku').value = params.get('cStand');
-                matStojanek.color.set(params.get('cStand'));
+            if (state.cs) {
+                document.getElementById('Barva_Stojanku').value = state.cs;
+                matStojanek.color.set(state.cs);
             }
-            if (params.has('cPlate')) {
-                document.getElementById('Barva_Cedulky').value = params.get('cPlate');
-                matCedulka.color.set(params.get('cPlate'));
+            if (state.cp) {
+                document.getElementById('Barva_Cedulky').value = state.cp;
+                matCedulka.color.set(state.cp);
             }
-            if (params.has('cElem')) {
-                document.getElementById('Barva_Textu').value = params.get('cElem');
-                matPrvek.color.set(params.get('cElem'));
+            if (state.ce) {
+                document.getElementById('Barva_Textu').value = state.ce;
+                matPrvek.color.set(state.ce);
             }
 
-            // Aktualizace viditelnosti sekcí podle režimu
             const isText = document.getElementById('modeSelect').value === 'text';
             document.getElementById('sectionText').style.display = isText ? 'block' : 'none';
             document.getElementById('sectionQR').style.display = isText ? 'none' : 'block';
             document.getElementById('lblBarvaPrvku').innerText = isText ? 'Text' : 'QR Kód';
         }
 
-        function generateShareURL() {
-            const params = new URLSearchParams();
-            const mode = document.getElementById('modeSelect').value;
-            
-            params.set('mode', mode);
-            params.set('text', document.getElementById('textInput').value);
-            params.set('qr', document.getElementById('qrInput').value);
-            params.set('textSize', document.getElementById('Velikost_Pisma').value);
-            params.set('textHeight', document.getElementById('Vyska_Pisma').value);
-            params.set('qrHeight', document.getElementById('Vyska_QR').value);
-            params.set('cStand', document.getElementById('Barva_Stojanku').value);
-            params.set('cPlate', document.getElementById('Barva_Cedulky').value);
-            params.set('cElem', document.getElementById('Barva_Textu').value);
-
-            return window.location.origin + window.location.pathname + '#' + params.toString();
-        }
-
-        // Načtení parametrů z URL při startu
+        // Načtení z zakódované URL
         applyStateFromURL();
         updateCedulkaMesh();
 
